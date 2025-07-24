@@ -1,13 +1,14 @@
 --[[
-📦 ESP3D - Desenho 3D projetado em 2D
+📦 ESP3D - Desenho 3D projetado em 2D com linha pontilhada e toggles
 Autor: DH SOARES
-Descrição: ESP que desenha Esfera (círculo 2D transparente) ou Caixa 3D projetada em 2D com opção de cantos arredondados.
-Configurações:
+Configurações principais:
 - Mode = "Sphere" | "Box"
-- Size = Vector3 (apenas para Box)
+- Size = Vector3 (apenas Box)
 - Color = Color3
 - Transparency = 0 a 1
-- RoundedCorners = true/false (só para Box)
+- RoundedCorners = true/false (Box)
+- Tracer = true/false
+- Box = true/false
 ]]
 
 local RunService = game:GetService("RunService")
@@ -16,13 +17,13 @@ local Camera = workspace.CurrentCamera
 local ESP3D = {}
 local Connections = {}
 
--- Projeta ponto 3D para tela 2D, retorna visibilidade, posição e profundidade
+-- Projeta ponto 3D para 2D e retorna visibilidade e profundidade
 local function ProjectPoint(pos)
 	local screenPos, onScreen = Camera:WorldToViewportPoint(pos)
 	return onScreen, Vector2.new(screenPos.X, screenPos.Y), screenPos.Z
 end
 
--- Cria círculo Drawing
+-- Cria círculo Drawing (para esfera 2D)
 local function CreateCircle()
 	local circle = Drawing.new("Circle")
 	circle.Filled = true
@@ -31,7 +32,44 @@ local function CreateCircle()
 	return circle
 end
 
--- Cria linhas para a caixa 3D
+-- Cria linha simples Drawing
+local function CreateLine()
+	local line = Drawing.new("Line")
+	line.Visible = false
+	line.Thickness = 2
+	return line
+end
+
+-- Cria linhas pontilhadas para tracer (linha pontilhada)
+local function CreateDashedLine()
+	local segments = {}
+	local segmentCount = 8
+	for i = 1, segmentCount do
+		local segment = Drawing.new("Line")
+		segment.Thickness = 2
+		segment.Transparency = 1
+		segment.Visible = false
+		table.insert(segments, segment)
+	end
+	return segments
+end
+
+-- Atualiza linha pontilhada entre dois pontos
+local function UpdateDashedLine(segments, from, to)
+	local dashLength = 1 / #segments
+	local dir = (to - from)
+	for i, segment in ipairs(segments) do
+		local t0 = (i-1) * dashLength
+		local t1 = i * dashLength
+		local p0 = from + dir * t0
+		local p1 = from + dir * t1
+		segment.From = p0
+		segment.To = p1
+		segment.Visible = true
+	end
+end
+
+-- Cria linhas para caixa 3D
 local function CreateBoxLines(color)
 	local lines = {}
 
@@ -43,11 +81,10 @@ local function CreateBoxLines(color)
 		return l
 	end
 
-	-- Aretes do cubo (vértices numerados 1 a 8)
 	local edges = {
-		{1,2},{2,3},{3,4},{4,1}, -- base inferior
-		{5,6},{6,7},{7,8},{8,5}, -- base superior
-		{1,5},{2,6},{3,7},{4,8}  -- conexões verticais
+		{1,2},{2,3},{3,4},{4,1},
+		{5,6},{6,7},{7,8},{8,5},
+		{1,5},{2,6},{3,7},{4,8}
 	}
 
 	for _, edge in ipairs(edges) do
@@ -92,57 +129,6 @@ local function GetCubeVertices(pos, size)
 	}
 end
 
--- Desenha arco simples entre 2 pontos (aproximado)
-local function DrawArc(fromPos, toPos, segments, radius, color)
-	segments = segments or 5
-	local lines = {}
-
-	local function newLine()
-		local l = Drawing.new("Line")
-		l.Color = color
-		l.Thickness = 2
-		l.Visible = true
-		return l
-	end
-
-	for i = 1, segments do
-		lines[i] = newLine()
-	end
-
-	-- calcula pontos interpolados em arco
-	local function interpolatePoints(p1, p2, t)
-		-- curva quadrática simples: p(t) = (1 - t)^2 * p1 + 2(1 - t)t * midpoint + t^2 * p2
-		-- pra simplicidade aqui só interp linear (arredondar direito é mais complexo)
-		return p1:Lerp(p2, t)
-	end
-
-	-- atualizar linhas baseado na interpolação linear (aproxima curva)
-	local function update()
-		for i = 1, segments do
-			local t1 = (i - 1) / segments
-			local t2 = i / segments
-			local pStart = interpolatePoints(fromPos, toPos, t1)
-			local pEnd = interpolatePoints(fromPos, toPos, t2)
-			lines[i].From = pStart
-			lines[i].To = pEnd
-			lines[i].Visible = true
-		end
-	end
-
-	update()
-
-	return {
-		lines = lines,
-		Update = update,
-		Remove = function()
-			for _, l in pairs(lines) do
-				l:Remove()
-			end
-		end
-	}
-end
-
--- Função principal para adicionar ESP
 function ESP3D:Add(obj, config)
 	config = config or {}
 	if not obj then return end
@@ -152,17 +138,39 @@ function ESP3D:Add(obj, config)
 	local color = config.Color or Color3.fromRGB(0, 255, 0)
 	local transparency = config.Transparency or 0.3
 	local rounded = config.RoundedCorners or false
+	local tracerEnabled = (config.Tracer == nil) and true or config.Tracer
+	local boxEnabled = (config.Box == nil) and true or config.Box
 
 	local circle
 	local box3d
 	local arcs = {}
+
+	-- Cria tracer linha pontilhada
+	local tracerSegments
+	local function createTracer()
+		if tracerSegments then
+			for _, seg in ipairs(tracerSegments) do seg.Visible = false seg:Remove() end
+		end
+		tracerSegments = CreateDashedLine()
+		for _, seg in ipairs(tracerSegments) do
+			seg.Color = color
+			seg.Transparency = transparency
+		end
+	end
+
+	createTracer()
 
 	local conn
 	conn = RunService.RenderStepped:Connect(function()
 		if not obj or not obj:IsDescendantOf(workspace) then
 			if circle then circle:Remove() end
 			if box3d then box3d:Remove() end
-			for _, arc in pairs(arcs) do arc:Remove() end
+			if tracerSegments then
+				for _, seg in ipairs(tracerSegments) do
+					seg.Visible = false
+					seg:Remove()
+				end
+			end
 			conn:Disconnect()
 			return
 		end
@@ -177,14 +185,26 @@ function ESP3D:Add(obj, config)
 		end
 
 		local onScreen, screenPos, depth = ProjectPoint(pos)
+		local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
 
-		if mode == "Sphere" then
-			-- Desenha esfera 2D como círculo com transparência
+		-- Desenha tracer (linha pontilhada) se habilitado
+		if tracerEnabled then
+			if onScreen then
+				UpdateDashedLine(tracerSegments, screenCenter, screenPos)
+				for _, seg in ipairs(tracerSegments) do seg.Visible = true end
+			else
+				for _, seg in ipairs(tracerSegments) do seg.Visible = false end
+			end
+		else
+			for _, seg in ipairs(tracerSegments) do seg.Visible = false end
+		end
+
+		if mode == "Sphere" and boxEnabled then
 			if not circle then
 				circle = CreateCircle()
 			end
 
-			if onScreen then
+			if onScreen and boxEnabled then
 				local scale = math.clamp(300 / depth, 5, 100)
 				circle.Position = screenPos
 				circle.Radius = scale
@@ -195,60 +215,32 @@ function ESP3D:Add(obj, config)
 				circle.Visible = false
 			end
 
-		elseif mode == "Box" then
-			-- Desenha caixa 3D projetada em 2D
+			if box3d then
+				box3d:Remove()
+				box3d = nil
+			end
+
+		elseif mode == "Box" and boxEnabled then
 			local vertices = GetCubeVertices(pos, size)
 			local points2D = {}
-			local allOnScreen = true
 			for i, v in ipairs(vertices) do
 				local vOnScreen, v2D = ProjectPoint(v)
 				points2D[i] = v2D
-				if not vOnScreen then allOnScreen = false end
 			end
 
 			if not box3d then
 				box3d = CreateBoxLines(color)
 			end
-
 			box3d.Update(points2D)
 
-			-- Desenha cantos arredondados (simples, só substitui algumas linhas por arcos)
-			if rounded then
-				-- Remove linhas para desenhar arcos
-				for _, e in ipairs(box3d.lines) do
-					e.line.Visible = false
-				end
-				-- Exemplo: desenhar arco simples entre os cantos da base inferior (1-2, 2-3, 3-4, 4-1)
-				-- Para simplicidade, só 4 arcos base
-				if #arcs == 0 then
-					arcs[1] = DrawArc(points2D[1], points2D[2], 6, 5, color)
-					arcs[2] = DrawArc(points2D[2], points2D[3], 6, 5, color)
-					arcs[3] = DrawArc(points2D[3], points2D[4], 6, 5, color)
-					arcs[4] = DrawArc(points2D[4], points2D[1], 6, 5, color)
-				else
-					for i=1,4 do
-						-- Atualiza posição dos arcos
-						for segIndex, lineSeg in ipairs(arcs[i].lines) do
-							local t1 = (segIndex - 1) / 6
-							local t2 = segIndex / 6
-							lineSeg.From = points2D[arcs[i].lines[segIndex].From] or points2D[1]
-							lineSeg.To = points2D[arcs[i].lines[segIndex].To] or points2D[2]
-						end
-					end
-				end
-			else
-				-- Remove arcos se existirem
-				for _, arc in pairs(arcs) do
-					arc:Remove()
-				end
-				arcs = {}
+			if circle then
+				circle.Visible = false
 			end
-
-			if not onScreen then
-				for _, e in ipairs(box3d.lines) do
-					e.line.Visible = false
-				end
-				if circle then circle.Visible = false end
+		else
+			if circle then circle.Visible = false end
+			if box3d then
+				box3d:Remove()
+				box3d = nil
 			end
 		end
 	end)
