@@ -1,9 +1,20 @@
 --[[
-Model ESP Library - Estilo HUB Modular
-Autor: DH SOARES S.
-Suporte: Nome, Distância, Tracer, Highlight Fill & Outline
-Somente para objetos do tipo Model/BasePart
-Corrigido por: ChatGPT
+📦 Model ESP Library - Versão Modular
+👤 Autor: DH SOARES
+
+🎯 Função:
+  Sistema de ESP para destacar objetos do tipo Model ou BasePart no jogo.
+
+🧩 Recursos Suportados:
+  ✅ Nome personalizado
+  ✅ Distância até o alvo
+  ✅ Tracer (linha do centro da tela até o alvo)
+  ✅ Highlight Fill (preenchimento)
+  ✅ Highlight Outline (contorno)
+
+🔍 Observações:
+  - Compatível com objetos diretamente referenciados (Model/BasePart).
+  - Otimizado para uso em jogos como DOORS, com múltiplos objetos simultâneos.
 ]]
 
 local RunService = game:GetService("RunService")
