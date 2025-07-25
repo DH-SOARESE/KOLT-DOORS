@@ -142,7 +142,7 @@ Para sugestões, relatórios de bugs ou para o autor original reivindicar crédi
 
 Se precisar de ajustes adicionais ou quiser incluir mais detalhes (como links específicos ou imagens), é só avisar!
 
----
+
 📦 Model ESP Library - Versão Aprimorada
 Este é um sistema de ESP (Extra Sensory Perception) modular e aprimorado, projetado para destacar objetos do tipo Model ou BasePart dentro do ambiente de jogo do Roblox. Ele é otimizado para cenários com múltiplos objetos e pode ser executado via loadstring.
 🎯 Funcionalidade
