@@ -142,111 +142,173 @@ Para sugestões, relatórios de bugs ou para o autor original reivindicar crédi
 
 Se precisar de ajustes adicionais ou quiser incluir mais detalhes (como links específicos ou imagens), é só avisar!
 
-# 📦 Model ESP Library - Versão Modular Aprimorada
 
 ---
 
-## 📄 Descrição
+📦 Model ESP Library - Biblioteca Modular para Destaque de Objetos
 
-A **Model ESP Library** é um sistema avançado de *Environmental Sensing Perception (ESP)*, projetado para destacar objetos do tipo `Model` ou `BasePart` dentro do ambiente de jogo. Esta biblioteca é otimizada para identificar e exibir informações cruciais sobre alvos, tornando-a ideal para jogos que exigem reconhecimento visual de múltiplos objetos simultaneamente, como DOORS.
+> 🚀 Destacando Models e Partes no Roblox com facilidade e performance.
+👤 Desenvolvedor: DH SOARES
 
-Desenvolvida com uma arquitetura modular, a biblioteca oferece flexibilidade e desempenho, permitindo uma personalização granular para cada objeto rastreado.
 
----
 
-## 💡 Recursos Suportados
-
-A biblioteca oferece uma gama completa de recursos para visualização aprimorada:
-
-* **Nome Personalizado**: Exibe um nome definível para cada objeto.
-* **Distância até o Alvo**: Mostra a distância em metros entre a câmera e o objeto.
-* **Tracer**: Desenha uma linha na tela, conectando uma origem configurável (topo, centro, fundo, esquerda, direita) até o centro do objeto.
-* **Highlight Fill (Preenchimento)**: Preenche o objeto com uma cor translúcida.
-* **Highlight Outline (Contorno)**: Desenha um contorno ao redor do objeto.
-* **3D Box (Caixa 3D)**: Cria uma caixa tridimensional ao redor do objeto. Esta funcionalidade utiliza a propriedade `Highlight.Adornee` para renderizar uma representação 3D no mundo do jogo, e não um Drawing 2D na tela. A caixa é ajustável em tamanho e cor, e pode ser automaticamente dimensionada com base nas dimensões do modelo/parte.
 
 ---
 
-## ⚙️ Instalação e Uso
+🧠 O que é?
 
-Para utilizar a biblioteca, copie o código-fonte e execute-o em seu ambiente Roblox Studio através de um `loadstring`.
+A Model ESP Library é uma biblioteca modular em Lua para Roblox, que permite destacar visualmente objetos (Model ou BasePart) no mundo 3D.
+Ideal para jogos como DOORS, onde múltiplos objetos importantes precisam ser identificados com clareza.
 
-### Exemplo de Uso:
 
-```lua
--- Carrega a biblioteca (via loadstring ou copiando o código diretamente)
--- Assume que o código da Model ESP Library está em uma variável string 'espLibraryCode'
-local ModelESP = loadstring(espLibraryCode)()
+---
 
--- Exemplo 1: Adicionar um Model com nome e contorno
-local targetModel = workspace:WaitForChild("SeuModeloAqui") -- Substitua pelo caminho do seu Model
-if targetModel then
-    ModelESP:Add(targetModel, {
-        Name = "Meu Objeto Importante",
-        Color = Color3.fromRGB(0, 255, 0), -- Verde
-        ShowName = true,
-        HighlightOutline = true,
-        MinDistance = 10, -- Mínimo de 10 metros para aparecer
-        MaxDistance = 100, -- Máximo de 100 metros para aparecer
-    })
-end
+✨ Recursos
 
--- Exemplo 2: Adicionar uma BasePart com preenchimento, distância e tracer
-local targetPart = workspace:WaitForChild("SuaParteAqui") -- Substitua pelo caminho da sua BasePart
-if targetPart then
-    ModelESP:Add(targetPart, {
-        Color = Color3.fromRGB(255, 0, 0), -- Vermelho
-        ShowDistance = true,
-        Tracer = true,
-        TracerOrigin = "Bottom", -- Linha saindo da parte inferior da tela
-        HighlightFill = true,
-    })
-end
+Recurso	Descrição
 
--- Exemplo 3: Adicionar um Model com 3D Box personalizado
-local anotherModel = workspace:WaitForChild("OutroModelo")
-if anotherModel then
-    ModelESP:Add(anotherModel, {
-        Color = Color3.fromRGB(0, 0, 255), -- Azul (para nome, distância, etc.)
-        ShowName = true,
-        Show3DBox = true,
-        BoxColor = Color3.fromRGB(255, 255, 0), -- Amarelo para a caixa 3D
-        BoxSize = Vector3.new(5, 5, 5), -- Tamanho fixo da caixa 3D (opcional, será calculado se não fornecido)
-    })
-end
+✅ Nome Customizado	Mostra um nome definido por você acima do alvo.
+📏 Distância	Exibe a distância (em metros) entre a câmera e o alvo.
+📍 Tracer	Desenha uma linha da tela até o alvo (com origem personalizável).
+🎨 Highlight Fill	Preenche o alvo com uma cor translúcida.
+🧱 Highlight Outline	Adiciona um contorno visível ao redor do alvo.
+📦 Caixa 3D (Beta)	Renderiza uma box highlight 3D ao redor de Models/BaseParts.
+🧩 Modular	Suporte individual por objeto, com controle total de visualização.
 
--- Para remover um objeto do rastreamento:
--- ModelESP:Remove(targetModel)
 
--- Para limpar todos os objetos rastreados:
--- ModelESP:Clear()
 
--- Para desabilitar temporariamente todo o ESP (sem remover):
--- ModelESP.Enabled = false
+---
 
-🛠️ Configurações Disponíveis (config na função Add)
-Ao adicionar um objeto, você pode passar uma tabela de configuração com as seguintes propriedades:
- * Target: (Instance, obrigatório) O Model ou BasePart a ser rastreado.
- * Color: (Color3, padrão: Color3.fromRGB(255, 255, 255)) A cor principal do ESP (nome, distância, tracer, highlights).
- * Name: (string, padrão: Target.Name) O nome a ser exibido para o objeto.
- * ShowName: (boolean, padrão: false) Se o nome do objeto deve ser exibido.
- * ShowDistance: (boolean, padrão: false) Se a distância até o objeto deve ser exibida.
- * Tracer: (boolean, padrão: false) Se uma linha de tracer deve ser desenhada.
- * HighlightFill: (boolean, padrão: false) Se o objeto deve ter um preenchimento Highlight.
- * HighlightOutline: (boolean, padrão: false) Se o objeto deve ter um contorno Highlight.
- * TracerOrigin: (string, padrão: "Bottom") A origem da linha do tracer. Opções: "Top", "Center", "Bottom", "Left", "Right".
- * MinDistance: (number, padrão: 0) A distância mínima para o ESP ser exibido.
- * MaxDistance: (number, padrão: math.huge) A distância máxima para o ESP ser exibido.
- * Show3DBox: (boolean, padrão: false) Se uma caixa 3D deve ser exibida ao redor do objeto.
- * BoxColor: (Color3, padrão: Color da configuração ou Color3.fromRGB(255, 255, 255)) A cor do contorno da caixa 3D.
- * BoxSize: (Vector3, padrão: calculado automaticamente) O tamanho explícito da caixa 3D. Se não fornecido, a biblioteca tentará calcular o extents do modelo/parte.
-⚠️ Observações Importantes
- * Compatibilidade: Funciona com objetos Model ou BasePart diretamente referenciados.
- * Otimização: Projetado para lidar com múltiplos objetos simultaneamente, sendo eficaz em cenários como DOORS.
- * 3D Box: Diferente de outros elementos que são Drawings (2D), a 3D Box utiliza a propriedade Highlight.Adornee para criar uma caixa no mundo 3D do jogo. Isso significa que ela se comporta como um objeto real do jogo e é afetada pela perspectiva da câmera.
- * PrimaryPart para Models: Para que os Highlights e a 3D Box funcionem de forma ideal com Models, é recomendável que o Model tenha um PrimaryPart definido. A biblioteca tenta definir um PrimaryPart automaticamente se um BasePart for encontrado.
-🤝 Contribuição
- * Autor Base: DH SOARES
- * Aprimoramentos: Gemini
-Sinta-se à vontade para propor melhorias ou relatar problemas.
+🔧 Como Usar
 
+🔹 Carregando a biblioteca via loadstring:
+
+local ModelESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/main/Esp%20library.lua"))()
+
+
+---
+
+🔸 Adicionando um Model com nome e contorno:
+
+local obj = workspace:WaitForChild("MeuModel")
+ModelESP:Add(obj, {
+    Name = "Inimigo",
+    Color = Color3.fromRGB(255, 0, 0),
+    ShowName = true,
+    HighlightOutline = true,
+    MinDistance = 10,
+    MaxDistance = 100,
+})
+
+
+---
+
+🔸 Adicionando uma BasePart com distância e tracer:
+
+local part = workspace:WaitForChild("MinhaParte")
+ModelESP:Add(part, {
+    Color = Color3.fromRGB(0, 255, 0),
+    ShowDistance = true,
+    Tracer = true,
+    TracerOrigin = "Bottom",
+    HighlightFill = true
+})
+
+
+---
+
+🔸 Adicionando uma Caixa 3D:
+
+ModelESP:Add(obj, {
+    Show3DBox = true,
+    BoxColor = Color3.fromRGB(255, 255, 0),
+    BoxSize = Vector3.new(4, 5, 4)
+})
+
+
+---
+
+⚙️ Parâmetros Disponíveis
+
+Parâmetro	Tipo	Descrição
+
+Target	Instance	Objeto Model ou BasePart a ser rastreado (obrigatório).
+Name	string	Nome exibido (padrão: Target.Name).
+Color	Color3	Cor geral do ESP.
+ShowName	boolean	Mostra o nome acima do alvo.
+ShowDistance	boolean	Mostra a distância até o alvo.
+Tracer	boolean	Desenha linha da tela até o alvo.
+TracerOrigin	string	Origem da linha: "Top", "Center", "Bottom", "Left", "Right".
+HighlightFill	boolean	Ativa preenchimento com cor.
+HighlightOutline	boolean	Ativa contorno visível.
+MinDistance	number	Distância mínima para aparecer.
+MaxDistance	number	Distância máxima para aparecer.
+Show3DBox	boolean	Mostra uma caixa 3D ao redor.
+BoxColor	Color3	Cor da caixa 3D (padrão: Color).
+BoxSize	Vector3	Tamanho fixo da 3D Box (calculado automaticamente se omitido).
+
+
+
+---
+
+🧼 Utilitários
+
+-- Remover um alvo específico:
+ModelESP:Remove(obj)
+
+-- Limpar todos os objetos rastreados:
+ModelESP:Clear()
+
+-- Desabilitar temporariamente o ESP:
+ModelESP.Enabled = false
+
+
+---
+
+⚠️ Considerações
+
+Compatível com Model e BasePart.
+
+Para Models, é recomendado definir uma PrimaryPart.
+
+A 3D Box usa Highlight.Adornee, afetando renderização diretamente no mundo 3D.
+
+O ESP é otimizado para muitos objetos simultâneos, ideal para ambientes como DOORS.
+
+
+
+---
+
+🤝 Créditos
+
+👤 Autor original: DH SOARES
+
+🔧 Melhorias: Gemini (OpenAI)
+
+📚 Documentação adaptada: [ChatGPT]
+
+
+
+---
+
+📄 Licença
+
+> Uso pessoal e educacional permitido.
+Para redistribuição, forneça os devidos créditos ao autor original.
+
+
+
+
+---
+
+📬 Contato
+
+💬 Abra uma issue ou entre em contato via GitHub:
+🔗 github.com/DH-SOARESE/KOLT-DOORS
+
+
+---
+
+Se quiser que eu adicione badges, GIFs de exemplo, ou organize esse conteúdo no próprio repositório como README.md, posso ajudar com isso também.
+
+---
