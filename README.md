@@ -1,79 +1,68 @@
-🌌 Orion Library – UI Adaptada para Exploits Roblox (Mobile Friendly)
+# 🌌 Orion Library – UI para Exploits Roblox (Mobile-Friendly)
 
-> 📦 Aviso: Esta biblioteca não foi criada por mim. Apenas fiz adaptações para melhorar o suporte em dispositivos móveis e adicionei melhorias, como o Dropdown Toggle.
-👤 Créditos ao autor original da Orion Library (identidade desconhecida). Se você for o criador, entre em contato para adicionar seu nome aqui e receber o devido reconhecimento.
-
-
-
+> 📢 **Nota**: Esta biblioteca é uma adaptação da Orion Library original, com foco em suporte a dispositivos móveis e novos recursos, como o *Dropdown Toggle*.  
+> 👤 **Créditos**: Autor original desconhecido. Se você for o criador, entre em contato para receber o devido reconhecimento!
 
 ---
 
-🚀 Visão Geral
+## 🚀 Visão Geral
 
-A Orion Library é uma biblioteca de UI para Roblox desenvolvida para ser utilizada com scripts loadstring() em executores como Delta, Hydrogen e similares.
-Esta versão foi adaptada com foco em compatibilidade para dispositivos móveis, mantendo todos os recursos da original e adicionando novos componentes interativos.
-
+A **Orion Library** é uma biblioteca de interface de usuário (UI) para scripts Roblox, compatível com executores como **Delta**, **Hydrogen** e outros via `loadstring()`. Esta versão foi otimizada para dispositivos móveis, mantendo todos os recursos originais e introduzindo melhorias exclusivas.
 
 ---
 
-✨ Melhorias Adicionadas
+## ✨ Melhorias Adicionadas
 
-✅ Suporte completo ao toque (touchscreen).
-
-📱 Layout otimizado para telas menores.
-
-⬇️ Dropdown Toggle: seleção múltipla (não presente na versão original).
-
-🔧 Correções visuais em ScrollView, melhor navegação e responsividade.
-
-🧪 Testado em dispositivos com FPS limitado.
-
-
+- ✅ **Suporte total a toque** (*touchscreen*) para dispositivos móveis.
+- 📱 **Layout responsivo** otimizado para telas menores.
+- ⬇️ **Dropdown Toggle**: Novo componente para seleção múltipla.
+- 🔧 **Melhorias visuais** em *ScrollView*, com navegação mais fluida e responsiva.
+- 🧪 **Testada em dispositivos com FPS limitado** para garantir performance.
 
 ---
 
-🧰 Recursos Originais Mantidos
+## 🧰 Recursos Originais Mantidos
 
-🎛️ Componentes: Botões, Toggles, Sliders, Labels, Dropdowns, TextBoxes, Binds, Color Pickers.
-
-🔔 Sistema de notificações com ícones e tempo configurável.
-
-💾 Salvamento automático de configurações (Flags).
-
-🎨 Suporte a temas personalizados.
-
-🧩 Ícones Feather totalmente integrados.
-
-🖱️ Interface arrastável.
-
-🧬 Suporte a executores modernos (gethui/syn.protect_gui).
-
-
+- 🎛️ **Componentes**: Botões, Toggles, Sliders, Labels, Dropdowns, TextBoxes, Binds, Color Pickers.
+- 🔔 **Notificações**: Sistema com ícones e tempo configurável.
+- 💾 **Salvamento automático**: Configurações salvas via *Flags*.
+- 🎨 **Temas personalizados**: Suporte a customização visual.
+- 🧩 **Ícones Feather**: Integrados para uma interface moderna.
+- 🖱️ **Interface arrastável**: Experiência de usuário fluida.
+- 🧬 **Compatibilidade**: Suporte a executores modernos (`gethui`, `syn.protect_gui`).
 
 ---
 
-📦 Como Usar
+## 📦 Como Usar
 
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/refs/heads/main/UI%20Library.lua"))()
+1. Carregue a biblioteca via `loadstring`:
+   ```lua
+   local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/refs/heads/main/UI%20Library.lua"))()
+   ```
 
-OrionLib:Init()
+2. Inicialize a biblioteca:
+   ```lua
+   OrionLib:Init()
+   ```
 
-local Window = OrionLib:MakeWindow({
-    Name = "Meu Script Incrível",
-    SaveConfig = true,
-    ConfigFolder = "MeuScriptConfigs",
-    IntroText = "Bem-vindo!",
-    ShowIcon = true,
-    Icon = "rbxassetid://SEU_ICON_ID"
-})
-
+3. Crie uma janela personalizada:
+   ```lua
+   local Window = OrionLib:MakeWindow({
+       Name = "Meu Script Incrível",
+       SaveConfig = true,
+       ConfigFolder = "MeuScriptConfigs",
+       IntroText = "Bem-vindo!",
+       ShowIcon = true,
+       Icon = "rbxassetid://SEU_ICON_ID"
+   })
+   ```
 
 ---
 
-🧩 Exemplos de Componentes
+## 🧩 Exemplos de Componentes
 
-✅ Toggle com Salvamento
-
+### ✅ Toggle com Salvamento
+```lua
 Tab:AddToggle({
     Name = "Velocidade",
     Default = false,
@@ -84,55 +73,71 @@ Tab:AddToggle({
         humanoid.WalkSpeed = state and 40 or 16
     end
 })
+```
 
-⬇️ Dropdown Toggle (Novo)
-
+### ⬇️ Dropdown Toggle (Novo)
+```lua
 Tab:AddDropdownToggle({
     Name = "Efeitos Visuais",
     Options = {"Bloom", "Blur", "Vignette"},
     Default = {"Bloom"},
+    Flag = "VisualEffects",
+    Save = true,
     Callback = function(selected)
         if selected.Blur then
             print("Blur ativado")
         end
-    end,
-    Flag = "VisualEffects",
-    Save = true
+    end
 })
-
+```
 
 ---
 
-🧹 Remover Interface
+## 🧹 Remover Interface
 
+Para destruir a interface:
+```lua
 OrionLib:Destroy()
-
-
----
-
-⚙️ Detalhes Técnicos
-
-GUI protegida automaticamente (gethui(), syn.protect_gui()).
-
-Configurações salvas como .txt por GameId.
-
-Feather Icons carregados diretamente do GitHub.
-
-Total compatibilidade com UserInputService (mouse, teclado, toque).
-
-
+```
 
 ---
 
-🤝 Créditos
+## ⚙️ Detalhes Técnicos
 
-🧠 Autor original da Orion Library – Desconhecido (insira link se souber)
-
-🛠️ Adaptação para mobile, Dropdown Toggle e melhorias gerais: DH SOARES
+- **Proteção da GUI**: Suporte automático a `gethui()` e `syn.protect_gui()`.
+- **Salvamento de configurações**: Arquivos `.txt` salvos por `GameId`.
+- **Ícones Feather**: Carregados diretamente do GitHub.
+- **Compatibilidade**: Suporte a `UserInputService` (mouse, teclado, toque).
 
 ---
 
-📄 Licença
+## 🤝 Créditos
 
-Uso livre para fins educacionais e pessoais.
-Dê os devidos créditos ao autor original e às modificações quando reutilizar ou redistribuir.
+- 🧠 **Autor original**: Desconhecido (entre em contato para créditos).
+- 🛠️ **Adaptações e melhorias**: [DH SOARES](https://github.com/DH-SOARESE).
+
+---
+
+## 📄 Licença
+
+- **Uso**: Livre para fins educacionais e pessoais.
+- **Distribuição**: Dê créditos ao autor original e às modificações ao reutilizar ou redistribuir.
+
+---
+
+## 📬 Contato
+
+Para sugestões, relatórios de bugs ou para o autor original reivindicar créditos, abra uma *issue* no repositório ou entre em contato diretamente.
+
+---
+
+### 🛠️ Mudanças feitas no README:
+1. **Estrutura mais clara**: Seções organizadas com títulos consistentes e emojis para destaque visual.
+2. **Linguagem concisa**: Textos simplificados, mantendo clareza e profissionalismo.
+3. **Melhorias visuais**: Uso de negrito, itálico e listas para facilitar a leitura.
+4. **Correções**: Ajustes em gramática, pontuação e links (ex.: link do GitHub para o autor).
+5. **Adição de seção de contato**: Para facilitar comunicação com o mantenedor.
+6. **Formatação de código**: Blocos de código Lua mais consistentes e legíveis.
+7. **Licença clara**: Reforçada a necessidade de dar créditos ao redistribuir.
+
+Se precisar de ajustes adicionais ou quiser incluir mais detalhes (como links específicos ou imagens), é só avisar!
