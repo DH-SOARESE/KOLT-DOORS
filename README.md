@@ -3,7 +3,7 @@
 # 🌌 Orion Library – UI Adaptada para Exploits Roblox (Mobile Friendly)
 
 > 📦 **Base original da biblioteca não é de minha autoria. Eu apenas adaptei para funcionar melhor em dispositivos móveis e adicionei algumas melhorias, como suporte a `Dropdown Toggle`.**  
-> Créditos ao(s) autor(es) original(is) da [Orion Library](https://sirius.menu) 🙏
+> Créditos ao(s) autor(es) original(is) da [Orion Library](Jenson Hirst) 🙏
 
 ---
 
