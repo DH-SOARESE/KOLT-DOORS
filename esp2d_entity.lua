@@ -1,6 +1,9 @@
---[[  
-ESP 2D com formas 3D simuladas e Highlight real  
-Autor: DH SOARES (adaptado para loadstring)  
+--[[
+Autor: DH SOARES (modificado)
+ESP orientada a objetos 2D com formas 3D simuladas
+Formas: Esfera, Cubo, Capsula, Square
+Linha (tracer) do topo da tela até o objeto
+Contorno com cor mais forte para destaque
 --]]
 
 local ESP2D = {}
@@ -20,6 +23,31 @@ local function WorldToViewport(pos)
 	return screenPos, onScreen
 end
 
+-- Helper pra desenhar contorno de retângulo arredondado
+local function DrawRoundedRectOutline(position, size, thickness, color, radius)
+	local segments = 10
+	local pts = {}
+
+	-- Calcula pontos dos cantos arredondados
+	for i = 0, segments do
+		local theta = math.pi/2 * (i / segments)
+		table.insert(pts, Vector2.new(position.X + radius - radius*math.cos(theta), position.Y + radius - radius*math.sin(theta))) -- top-left
+		table.insert(pts, Vector2.new(position.X + size.X - radius + radius*math.cos(theta), position.Y + radius - radius*math.sin(theta))) -- top-right
+		table.insert(pts, Vector2.new(position.X + radius - radius*math.cos(theta), position.Y + size.Y - radius + radius*math.sin(theta))) -- bottom-left
+		table.insert(pts, Vector2.new(position.X + size.X - radius + radius*math.cos(theta), position.Y + size.Y - radius + radius*math.sin(theta))) -- bottom-right
+	end
+
+	for i = 1, #pts - 1 do
+		local line = Draw("Line")
+		line.From = pts[i]
+		line.To = pts[i + 1]
+		line.Color = color
+		line.Thickness = thickness
+		line.Visible = true
+		task.delay(0.03, function() line:Remove() end)
+	end
+end
+
 function ESP2D:Create(config)
 	if not config or not config.Object then return end
 	local objId = tostring(config.Object:GetDebugId())
@@ -28,12 +56,22 @@ function ESP2D:Create(config)
 	local form = config.Form or "Square"
 	local color = config.Color or Color3.fromRGB(255, 255, 255)
 
-	local box = Draw(form:find("Sphere") and "Circle" or "Square")
+	-- Box principal
+	local boxType = (form == "Esfera" or form == "Capsula") and "Circle" or "Square"
+	local box = Draw(boxType)
 	box.Visible = false
 	box.Color = color
 	box.Thickness = 2
-	box.Filled = form:find("3D") and true or false
-	box.Radius = form == "3DSphere" and 8 or nil
+	box.Filled = (form ~= "Square") -- preenche para dar efeito sólido nas formas 3D simuladas
+	box.Radius = (form == "Esfera" or form == "Capsula") and 10 or nil
+
+	-- Contorno mais forte para destaque
+	local outline = Draw(boxType)
+	outline.Visible = false
+	outline.Color = Color3.new(math.clamp(color.R * 0.5,0,1), math.clamp(color.G * 0.5,0,1), math.clamp(color.B * 0.5,0,1)) -- cor mais escura
+	outline.Thickness = 4
+	outline.Filled = false
+	outline.Radius = box.Radius
 
 	local tracer = Draw("Line")
 	tracer.Visible = false
@@ -54,18 +92,6 @@ function ESP2D:Create(config)
 	distance.Visible = false
 	distance.Color = color
 
-	local highlight
-	if config.Highlight3D then
-		highlight = Instance.new("Highlight")
-		highlight.Name = "ESP_Highlight"
-		highlight.FillTransparency = 1
-		highlight.OutlineColor = color
-		highlight.OutlineTransparency = 0
-		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-		highlight.Parent = config.Object
-		highlight.Adornee = config.Object
-	end
-
 	ESP2D.Objects[objId] = {
 		Object = config.Object,
 		Form = form,
@@ -74,9 +100,9 @@ function ESP2D:Create(config)
 		ShowDistance = config.Distance ~= false,
 		Name = config.CustomName or config.Object.Name,
 		Color = color,
-		Highlight = highlight,
 		Draws = {
 			box = box,
+			outline = outline,
 			tracer = tracer,
 			name = name,
 			distance = distance
@@ -90,9 +116,6 @@ function ESP2D:Remove(object)
 	if data then
 		for _, v in pairs(data.Draws) do
 			v:Remove()
-		end
-		if data.Highlight then
-			data.Highlight:Destroy()
 		end
 		ESP2D.Objects[objId] = nil
 	end
@@ -115,9 +138,6 @@ function ESP2D:Clear()
 	for _, obj in pairs(ESP2D.Objects) do
 		for _, d in pairs(obj.Draws) do
 			d:Remove()
-		end
-		if obj.Highlight then
-			obj.Highlight:Destroy()
 		end
 	end
 	ESP2D.Objects = {}
@@ -146,49 +166,67 @@ RunService.RenderStepped:Connect(function()
 			local draws = data.Draws
 			if onScreen then
 				local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - pos).Magnitude) or 0
-				local scale = 1 / (Camera.CFrame.Position - pos).Magnitude * 100
-				local size2D = Vector2.new(size.X * scale, size.Y * scale)
 
-				if data.Form == "VerticalRect" or data.Form == "3DRect" then
-					size2D = Vector2.new(6, size2D.Y + 20)
-				elseif data.Form == "3DSphere" then
-					draws.box.Radius = size2D.Y / 2
-				elseif data.Form == "3DCube" then
-					-- Simula cantos arredondados aproximando um quadrado maior
-					size2D = Vector2.new(math.max(size2D.X, size2D.Y), math.max(size2D.X, size2D.Y))
+				local scale = 1 / (Camera.CFrame.Position - pos).Magnitude * 100
+
+				local size2D
+
+				-- Ajusta tamanho e forma baseado no tipo
+				if data.Form == "Esfera" then
+					size2D = Vector2.new(size.X * scale, size.X * scale)
+					draws.box.Radius = size2D.X/2
+					draws.outline.Radius = size2D.X/2
+				elseif data.Form == "Capsula" then
+					size2D = Vector2.new(size.X * scale * 0.6, size.Y * scale)
+					draws.box.Radius = size2D.X/2
+					draws.outline.Radius = size2D.X/2
+				elseif data.Form == "Cubo" then
+					size2D = Vector2.new(math.max(size.X, size.Y) * scale, math.max(size.X, size.Y) * scale)
+					draws.box.Radius = 6
+					draws.outline.Radius = 6
+				else -- Square
+					size2D = Vector2.new(size.X * scale, size.Y * scale)
+					draws.box.Radius = nil
+					draws.outline.Radius = nil
 				end
 
+				-- Posiciona contorno primeiro (maior e mais grosso)
+				draws.outline.Position = Vector2.new(screenPos.X - size2D.X/2, screenPos.Y - size2D.Y/2)
+				draws.outline.Size = size2D
+				draws.outline.Visible = true
+
+				-- Posiciona box (fill mais suave por cima)
+				draws.box.Position = Vector2.new(screenPos.X - size2D.X/2, screenPos.Y - size2D.Y/2)
 				draws.box.Size = size2D
-				draws.box.Position = Vector2.new(screenPos.X - size2D.X / 2, screenPos.Y - size2D.Y / 2)
 				draws.box.Visible = true
 
-				draws.box.Filled = data.Form:find("3D") ~= nil
-				draws.box.Transparency = 0.15
-				draws.box.Thickness = 2
-
+				-- Linha do topo da tela até o centro do objeto
 				if data.ShowTracer then
-					draws.tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-					draws.tracer.To = screenPos
+					draws.tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
+					draws.tracer.To = Vector2.new(screenPos.X, screenPos.Y)
 					draws.tracer.Visible = true
 				else
 					draws.tracer.Visible = false
 				end
 
+				-- Nome
 				if data.ShowName then
-					draws.name.Position = Vector2.new(screenPos.X, screenPos.Y - size2D.Y / 2 - 15)
+					draws.name.Position = Vector2.new(screenPos.X, screenPos.Y - size2D.Y/2 - 15)
 					draws.name.Text = data.Name
 					draws.name.Visible = true
 				else
 					draws.name.Visible = false
 				end
 
+				-- Distância
 				if data.ShowDistance then
-					draws.distance.Position = Vector2.new(screenPos.X, screenPos.Y + size2D.Y / 2 + 2)
+					draws.distance.Position = Vector2.new(screenPos.X, screenPos.Y + size2D.Y/2 + 2)
 					draws.distance.Text = "[" .. math.floor(dist) .. "m]"
 					draws.distance.Visible = true
 				else
 					draws.distance.Visible = false
 				end
+
 			else
 				for _, d in pairs(draws) do
 					d.Visible = false
