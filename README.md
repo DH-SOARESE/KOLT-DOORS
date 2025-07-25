@@ -1,68 +1,71 @@
-# 🌌 Orion Library – UI para Exploits Roblox (Mobile-Friendly)
 
-> 📢 **Nota**: Esta biblioteca é uma adaptação da Orion Library original, com foco em suporte a dispositivos móveis e novos recursos, como o *Dropdown Toggle*.  
-> 👤 **Créditos**: Autor original desconhecido. Se você for o criador, entre em contato para receber o devido reconhecimento!
+# 🌌 Orion Library – UI Moderna para Scripts Roblox (Mobile-Friendly)
+
+> 📢 **Nota**: Esta biblioteca é uma adaptação da *Orion Library* original, com foco em dispositivos móveis e novos recursos como *Dropdown Toggle*.  
+> 👤 **Créditos**: Autor original desconhecido. Caso seja o criador, entre em contato para atribuição de créditos.
 
 ---
 
 ## 🚀 Visão Geral
 
-A **Orion Library** é uma biblioteca de interface de usuário (UI) para scripts Roblox, compatível com executores como **Delta**, **Hydrogen** e outros via `loadstring()`. Esta versão foi otimizada para dispositivos móveis, mantendo todos os recursos originais e introduzindo melhorias exclusivas.
+A **Orion Library** é uma biblioteca de interface gráfica para scripts Roblox, compatível com executores como **Delta**, **Hydrogen**, entre outros.  
+Esta versão é otimizada para dispositivos móveis, mantendo todos os recursos originais e adicionando novos componentes e melhorias visuais.
 
 ---
 
-## ✨ Melhorias Adicionadas
+## ✨ Melhorias Adicionais
 
-- ✅ **Suporte total a toque** (*touchscreen*) para dispositivos móveis.
-- 📱 **Layout responsivo** otimizado para telas menores.
-- ⬇️ **Dropdown Toggle**: Novo componente para seleção múltipla.
-- 🔧 **Melhorias visuais** em *ScrollView*, com navegação mais fluida e responsiva.
-- 🧪 **Testada em dispositivos com FPS limitado** para garantir performance.
+- ✅ Suporte total a *touchscreen* (toque).
+- 📱 Layout responsivo para telas pequenas.
+- ⬇️ Novo componente: **Dropdown Toggle** com múltiplas seleções.
+- 🔧 ScrollViews otimizados e mais suaves.
+- 🧪 Testado com FPS limitado para garantir performance.
 
 ---
 
-## 🧰 Recursos Originais Mantidos
+## 🧰 Recursos Mantidos da Versão Original
 
-- 🎛️ **Componentes**: Botões, Toggles, Sliders, Labels, Dropdowns, TextBoxes, Binds, Color Pickers.
-- 🔔 **Notificações**: Sistema com ícones e tempo configurável.
-- 💾 **Salvamento automático**: Configurações salvas via *Flags*.
-- 🎨 **Temas personalizados**: Suporte a customização visual.
-- 🧩 **Ícones Feather**: Integrados para uma interface moderna.
-- 🖱️ **Interface arrastável**: Experiência de usuário fluida.
-- 🧬 **Compatibilidade**: Suporte a executores modernos (`gethui`, `syn.protect_gui`).
+- 🎛️ Componentes: Botões, Toggles, Sliders, Labels, Dropdowns, TextBoxes, Binds, Color Pickers.
+- 🔔 Notificações com ícones e duração configurável.
+- 💾 Salvamento automático de configurações via *Flags*.
+- 🎨 Temas customizáveis.
+- 🧩 Ícones Feather embutidos.
+- 🖱️ Interface arrastável.
+- 🧬 Suporte a `gethui()` e `syn.protect_gui()`.
 
 ---
 
 ## 📦 Como Usar
 
-1. Carregue a biblioteca via `loadstring`:
+1. **Carregue a biblioteca:**
    ```lua
    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/refs/heads/main/UI%20Library.lua"))()
-   ```
 
-2. Inicialize a biblioteca:
-   ```lua
-   OrionLib:Init()
-   ```
+2. Inicialize a interface:
 
-3. Crie uma janela personalizada:
-   ```lua
-   local Window = OrionLib:MakeWindow({
-       Name = "Meu Script Incrível",
-       SaveConfig = true,
-       ConfigFolder = "MeuScriptConfigs",
-       IntroText = "Bem-vindo!",
-       ShowIcon = true,
-       Icon = "rbxassetid://SEU_ICON_ID"
-   })
-   ```
+OrionLib:Init()
+
+
+3. Crie uma janela:
+
+local Window = OrionLib:MakeWindow({
+    Name = "Meu Script Incrível",
+    SaveConfig = true,
+    ConfigFolder = "MeuScriptConfigs",
+    IntroText = "Bem-vindo!",
+    ShowIcon = true,
+    Icon = "rbxassetid://SEU_ICON_ID"
+})
+
+
+
 
 ---
 
-## 🧩 Exemplos de Componentes
+🧩 Exemplos de Componentes
 
-### ✅ Toggle com Salvamento
-```lua
+✅ Toggle com Salvamento
+
 Tab:AddToggle({
     Name = "Velocidade",
     Default = false,
@@ -73,10 +76,9 @@ Tab:AddToggle({
         humanoid.WalkSpeed = state and 40 or 16
     end
 })
-```
 
-### ⬇️ Dropdown Toggle (Novo)
-```lua
+⬇️ Dropdown Toggle (Novo)
+
 Tab:AddDropdownToggle({
     Name = "Efeitos Visuais",
     Options = {"Bloom", "Blur", "Vignette"},
@@ -89,66 +91,20 @@ Tab:AddDropdownToggle({
         end
     end
 })
-```
+
 
 ---
 
-## 🧹 Remover Interface
+🧹 Remover a Interface
 
-Para destruir a interface:
-```lua
 OrionLib:Destroy()
-```
-
----
-
-## ⚙️ Detalhes Técnicos
-
-- **Proteção da GUI**: Suporte automático a `gethui()` e `syn.protect_gui()`.
-- **Salvamento de configurações**: Arquivos `.txt` salvos por `GameId`.
-- **Ícones Feather**: Carregados diretamente do GitHub.
-- **Compatibilidade**: Suporte a `UserInputService` (mouse, teclado, toque).
-
----
-
-## 🤝 Créditos
-
-- 🧠 **Autor original**: Desconhecido (entre em contato para créditos).
-- 🛠️ **Adaptações e melhorias**: [DH SOARES](https://github.com/DH-SOARESE).
-
----
-
-## 📄 Licença
-
-- **Uso**: Livre para fins educacionais e pessoais.
-- **Distribuição**: Dê créditos ao autor original e às modificações ao reutilizar ou redistribuir.
-
----
-
-## 📬 Contato
-
-Para sugestões, relatórios de bugs ou para o autor original reivindicar créditos, abra uma *issue* no repositório ou entre em contato diretamente.
-
----
-
-### 🛠️ Mudanças feitas no README:
-1. **Estrutura mais clara**: Seções organizadas com títulos consistentes e emojis para destaque visual.
-2. **Linguagem concisa**: Textos simplificados, mantendo clareza e profissionalismo.
-3. **Melhorias visuais**: Uso de negrito, itálico e listas para facilitar a leitura.
-4. **Correções**: Ajustes em gramática, pontuação e links (ex.: link do GitHub para o autor).
-5. **Adição de seção de contato**: Para facilitar comunicação com o mantenedor.
-6. **Formatação de código**: Blocos de código Lua mais consistentes e legíveis.
-7. **Licença clara**: Reforçada a necessidade de dar créditos ao redistribuir.
-
-Se precisar de ajustes adicionais ou quiser incluir mais detalhes (como links específicos ou imagens), é só avisar!
 
 
 ---
 
-📦 Model ESP Library - Biblioteca Modular para Destaque de Objetos
+📦 Model ESP Library – Destaque Visual para Objetos 3D
 
-> 🚀 Destacando Models e Partes no Roblox com facilidade e performance.
-👤 Desenvolvedor: DH SOARES
+> 🎯 Destaque de Models e Partes em jogos como DOORS, com alto desempenho e personalização.
 
 
 
@@ -157,8 +113,8 @@ Se precisar de ajustes adicionais ou quiser incluir mais detalhes (como links es
 
 🧠 O que é?
 
-A Model ESP Library é uma biblioteca modular em Lua para Roblox, que permite destacar visualmente objetos (Model ou BasePart) no mundo 3D.
-Ideal para jogos como DOORS, onde múltiplos objetos importantes precisam ser identificados com clareza.
+Uma biblioteca modular de ESP para Roblox, que permite destacar objetos (Model ou BasePart) no mundo 3D.
+Ideal para identificar entidades importantes como portas, armários, chaves e inimigos.
 
 
 ---
@@ -167,13 +123,13 @@ Ideal para jogos como DOORS, onde múltiplos objetos importantes precisam ser id
 
 Recurso	Descrição
 
-✅ Nome Customizado	Mostra um nome definido por você acima do alvo.
-📏 Distância	Exibe a distância (em metros) entre a câmera e o alvo.
-📍 Tracer	Desenha uma linha da tela até o alvo (com origem personalizável).
-🎨 Highlight Fill	Preenche o alvo com uma cor translúcida.
-🧱 Highlight Outline	Adiciona um contorno visível ao redor do alvo.
-📦 Caixa 3D (Beta)	Renderiza uma box highlight 3D ao redor de Models/BaseParts.
-🧩 Modular	Suporte individual por objeto, com controle total de visualização.
+✅ Nome Customizado	Exibe texto acima do alvo.
+📏 Distância	Mostra distância da câmera.
+📍 Tracer	Linha entre a tela e o objeto.
+🎨 Highlight Fill	Preenchimento colorido.
+🧱 Highlight Outline	Contorno do objeto.
+📦 Caixa 3D (Beta)	Renderiza caixa 3D ao redor do objeto.
+🧩 Modular	Configurações individuais para cada objeto.
 
 
 
@@ -181,14 +137,11 @@ Recurso	Descrição
 
 🔧 Como Usar
 
-🔹 Carregando a biblioteca via loadstring:
+🔹 Carregar a biblioteca:
 
 local ModelESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/main/Esp%20library.lua"))()
 
-
----
-
-🔸 Adicionando um Model com nome e contorno:
+🔸 Adicionar um Model:
 
 local obj = workspace:WaitForChild("MeuModel")
 ModelESP:Add(obj, {
@@ -200,10 +153,7 @@ ModelESP:Add(obj, {
     MaxDistance = 100,
 })
 
-
----
-
-🔸 Adicionando uma BasePart com distância e tracer:
+🔸 Adicionar uma BasePart:
 
 local part = workspace:WaitForChild("MinhaParte")
 ModelESP:Add(part, {
@@ -214,10 +164,7 @@ ModelESP:Add(part, {
     HighlightFill = true
 })
 
-
----
-
-🔸 Adicionando uma Caixa 3D:
+🔸 Adicionar Caixa 3D:
 
 ModelESP:Add(obj, {
     Show3DBox = true,
@@ -232,20 +179,20 @@ ModelESP:Add(obj, {
 
 Parâmetro	Tipo	Descrição
 
-Target	Instance	Objeto Model ou BasePart a ser rastreado (obrigatório).
-Name	string	Nome exibido (padrão: Target.Name).
-Color	Color3	Cor geral do ESP.
-ShowName	boolean	Mostra o nome acima do alvo.
-ShowDistance	boolean	Mostra a distância até o alvo.
-Tracer	boolean	Desenha linha da tela até o alvo.
-TracerOrigin	string	Origem da linha: "Top", "Center", "Bottom", "Left", "Right".
-HighlightFill	boolean	Ativa preenchimento com cor.
-HighlightOutline	boolean	Ativa contorno visível.
-MinDistance	number	Distância mínima para aparecer.
-MaxDistance	number	Distância máxima para aparecer.
-Show3DBox	boolean	Mostra uma caixa 3D ao redor.
+Target	Instance	Model ou BasePart (obrigatório).
+Name	string	Nome a exibir (padrão: Target.Name).
+Color	Color3	Cor principal do ESP.
+ShowName	boolean	Mostra o nome acima do objeto.
+ShowDistance	boolean	Exibe a distância.
+Tracer	boolean	Desenha linha na tela.
+TracerOrigin	string	Origem da linha: "Top", "Bottom", "Center", etc.
+HighlightFill	boolean	Preenchimento com cor.
+HighlightOutline	boolean	Contorno visível.
+MinDistance	number	Distância mínima para mostrar.
+MaxDistance	number	Distância máxima para mostrar.
+Show3DBox	boolean	Ativa caixa 3D ao redor do objeto.
 BoxColor	Color3	Cor da caixa 3D (padrão: Color).
-BoxSize	Vector3	Tamanho fixo da 3D Box (calculado automaticamente se omitido).
+BoxSize	Vector3	Tamanho da caixa 3D (opcional).
 
 
 
@@ -253,13 +200,13 @@ BoxSize	Vector3	Tamanho fixo da 3D Box (calculado automaticamente se omitido).
 
 🧼 Utilitários
 
--- Remover um alvo específico:
+-- Remover alvo específico
 ModelESP:Remove(obj)
 
--- Limpar todos os objetos rastreados:
+-- Limpar todos os objetos
 ModelESP:Clear()
 
--- Desabilitar temporariamente o ESP:
+-- Desativar temporariamente
 ModelESP.Enabled = false
 
 
@@ -271,9 +218,9 @@ Compatível com Model e BasePart.
 
 Para Models, é recomendado definir uma PrimaryPart.
 
-A 3D Box usa Highlight.Adornee, afetando renderização diretamente no mundo 3D.
+A 3D Box usa Highlight.Adornee para melhor performance.
 
-O ESP é otimizado para muitos objetos simultâneos, ideal para ambientes como DOORS.
+Ideal para jogos com múltiplos objetos relevantes, como DOORS.
 
 
 
@@ -281,11 +228,11 @@ O ESP é otimizado para muitos objetos simultâneos, ideal para ambientes como D
 
 🤝 Créditos
 
-👤 Autor original: DH SOARES
+🧠 Autor Original: DH SOARES
 
-🔧 Melhorias: Gemini (OpenAI)
+🛠️ Melhorias e Documentação: Gemini (OpenAI)
 
-📚 Documentação adaptada: [ChatGPT]
+📚 Readme e Formatação: [ChatGPT]
 
 
 
@@ -294,7 +241,7 @@ O ESP é otimizado para muitos objetos simultâneos, ideal para ambientes como D
 📄 Licença
 
 > Uso pessoal e educacional permitido.
-Para redistribuição, forneça os devidos créditos ao autor original.
+Para redistribuição, forneça os devidos créditos.
 
 
 
@@ -303,12 +250,6 @@ Para redistribuição, forneça os devidos créditos ao autor original.
 
 📬 Contato
 
-💬 Abra uma issue ou entre em contato via GitHub:
-🔗 github.com/DH-SOARESE/KOLT-DOORS
+Para dúvidas, sugestões ou para reivindicar autoria:
 
-
----
-
-Se quiser que eu adicione badges, GIFs de exemplo, ou organize esse conteúdo no próprio repositório como README.md, posso ajudar com isso também.
-
----
+GitHub: github.com/DH-SOARESE/KOLT-DOORS
