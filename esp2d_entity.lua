@@ -1,142 +1,159 @@
 --[[ 
-    ESP 3D Visual - Versão Orientada a Endereço (Model/BasePart)
-    Suporte: Box (Cubo), Sphere, Linha
-    Autor: DH SOARES
+Autor: DH SOARES
+ESP orientada a objetos 2D (Sprites, UI)
+Suporte: Tracer, Nome, Distância, Formas (Círculo, Quadrado, Retângulo)
+Remoção individual, Toggle global
 --]]
 
-local ESP3D = {
-    Objects = {},
-    Enabled = true,
-    Defaults = {
-        Form = "Box", -- "Box" ou "Sphere"
-        Color = Color3.fromRGB(0, 255, 100),
-        Transparency = 0.5,
-        Material = Enum.Material.Neon,
-        ShowLine = true
-    }
-}
+local ESP2D = {}
+ESP2D.Enabled = true
+ESP2D.Objects = {}
+ESP2D.Drawings = {}
+ESP2D.RunConnection = nil
 
-local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = game.Players.LocalPlayer
 
--- Cria um cubo 3D
-local function createBox(position, color, transparency, material)
-    local box = Instance.new("Part")
-    box.Size = Vector3.new(2, 2, 2)
-    box.Position = position
-    box.Anchored = true
-    box.CanCollide = false
-    box.Transparency = transparency
-    box.Material = material
-    box.Color = color
-    box.Name = "ESP_Box"
-    box.Parent = workspace
-    return box
+local function Draw(type)
+	return Drawing.new(type)
 end
 
--- Cria uma esfera 3D
-local function createSphere(position, color, transparency, material)
-    local sphere = Instance.new("Part")
-    sphere.Shape = Enum.PartType.Ball
-    sphere.Size = Vector3.new(2.5, 2.5, 2.5)
-    sphere.Position = position
-    sphere.Anchored = true
-    sphere.CanCollide = false
-    sphere.Transparency = transparency
-    sphere.Material = material
-    sphere.Color = color
-    sphere.Name = "ESP_Sphere"
-    sphere.Parent = workspace
-    return sphere
+local function WorldToViewport(pos)
+	local screenPos, onScreen = Camera:WorldToViewportPoint(pos)
+	return screenPos, onScreen
 end
 
--- Cria uma linha 3D (Beam)
-local function createLine(origin, target, color)
-    local a1 = Instance.new("Attachment", origin)
-    local a2 = Instance.new("Attachment", target)
+function ESP2D:Create(config)
+	if not config or not config.Object then return end
+	local objId = tostring(config.Object:GetDebugId())
+	if ESP2D.Objects[objId] then return end
 
-    local beam = Instance.new("Beam")
-    beam.Attachment0 = a1
-    beam.Attachment1 = a2
-    beam.Width0 = 0.08
-    beam.Width1 = 0.08
-    beam.Color = ColorSequence.new(color)
-    beam.FaceCamera = true
-    beam.LightEmission = 1
-    beam.Name = "ESP_Line"
-    beam.Parent = origin
+	local box = Draw(config.Form == "Circle" and "Circle" or "Square")
+	box.Visible = false
+	box.Color = config.Color or Color3.fromRGB(255, 255, 255)
+	box.Thickness = 2
+	box.Filled = false
+	box.Radius = config.Form == "Circle" and 6 or nil
+	box.Size = config.Form == "VerticalRect" and Vector2.new(4, 20) or Vector2.new(10,10)
 
-    return beam
+	local tracer = Draw("Line")
+	tracer.Visible = false
+	tracer.Color = box.Color
+	tracer.Thickness = 1
+
+	local name = Draw("Text")
+	name.Size = 13
+	name.Center = true
+	name.Outline = true
+	name.Visible = false
+	name.Color = box.Color
+
+	local distance = Draw("Text")
+	distance.Size = 13
+	distance.Center = true
+	distance.Outline = true
+	distance.Visible = false
+	distance.Color = box.Color
+
+	ESP2D.Objects[objId] = {
+		Object = config.Object,
+		Form = config.Form or "Square",
+		ShowTracer = config.Tracer ~= false,
+		ShowName = config.Name ~= false,
+		ShowDistance = config.Distance ~= false,
+		Name = config.CustomName or config.Object.Name,
+		Color = box.Color,
+		Draws = {
+			box = box,
+			tracer = tracer,
+			name = name,
+			distance = distance
+		}
+	}
 end
 
--- Adiciona ESP ao objeto
-function ESP3D:Add(obj, config)
-    config = config or {}
-    local form = config.Form or self.Defaults.Form
-    local color = config.Color or self.Defaults.Color
-    local transparency = config.Transparency or self.Defaults.Transparency
-    local material = config.Material or self.Defaults.Material
-    local showLine = config.ShowLine ~= false
-
-    local part
-    if form == "Box" then
-        part = createBox(obj.Position, color, transparency, material)
-    elseif form == "Sphere" then
-        part = createSphere(obj.Position, color, transparency, material)
-    end
-
-    local line
-    if showLine and self.Enabled then
-        line = createLine(part, Camera, color)
-    end
-
-    table.insert(self.Objects, {
-        Target = obj,
-        Shape = part,
-        Line = line,
-        Config = {
-            Form = form,
-            Color = color,
-            Transparency = transparency,
-            ShowLine = showLine
-        }
-    })
+function ESP2D:Remove(object)
+	local objId = tostring(object:GetDebugId())
+	local data = ESP2D.Objects[objId]
+	if data then
+		for _, v in pairs(data.Draws) do
+			v:Remove()
+		end
+		ESP2D.Objects[objId] = nil
+	end
 end
 
--- Atualização em tempo real
-RunService.RenderStepped:Connect(function()
-    if not ESP3D.Enabled then
-        for _, v in ipairs(ESP3D.Objects) do
-            if v.Shape then v.Shape.Transparency = 1 end
-            if v.Line then v.Line.Enabled = false end
-        end
-        return
-    end
+function ESP2D:Enable()
+	ESP2D.Enabled = true
+end
 
-    for i, data in ipairs(ESP3D.Objects) do
-        local obj = data.Target
-        local shape = data.Shape
+function ESP2D:Disable()
+	ESP2D.Enabled = false
+	for _, obj in pairs(ESP2D.Objects) do
+		for _, d in pairs(obj.Draws) do
+			d.Visible = false
+		end
+	end
+end
 
-        if obj and obj.Parent and shape then
-            shape.Position = obj.Position
-            shape.Transparency = data.Config.Transparency
-            shape.Color = data.Config.Color
-            if data.Line then
-                data.Line.Attachment1.WorldPosition = Camera.CFrame.Position
-                data.Line.Enabled = true
-            end
-        else
-            if shape then shape:Destroy() end
-            if data.Line then data.Line:Destroy() end
-            table.remove(ESP3D.Objects, i)
-        end
-    end
+function ESP2D:Clear()
+	for _, obj in pairs(ESP2D.Objects) do
+		for _, d in pairs(obj.Draws) do
+			d:Remove()
+		end
+	end
+	ESP2D.Objects = {}
+end
+
+ESP2D.RunConnection = game:GetService("RunService").RenderStepped:Connect(function()
+	if not ESP2D.Enabled then return end
+	for id, data in pairs(ESP2D.Objects) do
+		local obj = data.Object
+		if not obj or not obj:IsDescendantOf(workspace) then
+			ESP2D:Remove(obj)
+		else
+			local pos = obj:IsA("Model") and obj:GetPivot().Position or obj.Position
+			local screenPos, onScreen = WorldToViewport(pos)
+
+			local draws = data.Draws
+			if onScreen then
+				local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - pos).Magnitude) or 0
+
+				-- Box
+				draws.box.Position = Vector2.new(screenPos.X, screenPos.Y)
+				draws.box.Visible = true
+
+				-- Tracer
+				if data.ShowTracer then
+					draws.tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+					draws.tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+					draws.tracer.Visible = true
+				else
+					draws.tracer.Visible = false
+				end
+
+				-- Nome
+				if data.ShowName then
+					draws.name.Position = Vector2.new(screenPos.X, screenPos.Y - 18)
+					draws.name.Text = data.Name
+					draws.name.Visible = true
+				else
+					draws.name.Visible = false
+				end
+
+				-- Distância
+				if data.ShowDistance then
+					draws.distance.Position = Vector2.new(screenPos.X, screenPos.Y + 12)
+					draws.distance.Text = "[" .. math.floor(dist) .. "m]"
+					draws.distance.Visible = true
+				else
+					draws.distance.Visible = false
+				end
+			else
+				for _, d in pairs(draws) do d.Visible = false end
+			end
+		end
+	end
 end)
 
--- Toggle externo
-function ESP3D:SetEnabled(state)
-    self.Enabled = state
-end
-
-return ESP3D
+return ESP2D
