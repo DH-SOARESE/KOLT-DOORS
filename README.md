@@ -1,43 +1,61 @@
 ---
 
-# 🌌 Orion Library – UI Adaptada para Exploits Roblox (Mobile Friendly)
+🌌 Orion Library – UI Adaptada para Exploits Roblox (Mobile Friendly)
 
-> 📦 **Base original da biblioteca não é de minha autoria. Eu apenas adaptei para funcionar melhor em dispositivos móveis e adicionei algumas melhorias, como suporte a `Dropdown Toggle`.**  
-> 📦 **Aviso**: Esta biblioteca **não foi criada por mim**. Apenas fiz adaptações para melhorar o suporte em **dispositivos móveis** e adicionei recursos como o `Dropdown Toggle`.  
-> 👤 **Créditos ao autor original** da Orion Library, cuja identidade infelizmente não conheço. Se você for o criador, sinta-se reconhecido e entre em contato para adicionar seu nome aqui.
+> 📦 Aviso: Esta biblioteca não foi criada por mim. Apenas fiz adaptações para melhorar o suporte em dispositivos móveis e adicionei melhorias, como o Dropdown Toggle.
+👤 Créditos ao autor original da Orion Library (identidade desconhecida). Se você for o criador, entre em contato para adicionar seu nome aqui e receber o devido reconhecimento.
 
----
 
-## 🚀 Visão Geral
 
-A Orion Library é uma poderosa biblioteca de UI para Roblox, voltada ao uso em scripts `loadstring()` via executores como **Delta**, **Hydrogen**, entre outros. Esta versão adaptada melhora a compatibilidade com **dispositivos móveis**, mantendo todos os recursos originais e adicionando novos elementos, como o `Dropdown Toggle`.
 
 ---
 
-## ✨ Melhorias Adicionadas
+🚀 Visão Geral
 
-- ✅ Suporte completo a **toque em telas móveis (touch)**.
-- 🔄 **Botões mais responsivos** e layout adaptado para celulares.
-- ⬇️ **Dropdown Toggle** (seleção múltipla): opção que não existia na versão original.
-- 🔧 Correções em posicionamento e navegação em `ScrollView`.
+A Orion Library é uma biblioteca de UI para Roblox desenvolvida para ser utilizada com scripts loadstring() em executores como Delta, Hydrogen e similares.
+Esta versão foi adaptada com foco em compatibilidade para dispositivos móveis, mantendo todos os recursos da original e adicionando novos componentes interativos.
 
----
-
-## 🧰 Recursos Originais Mantidos
-
-- 🎛️ UI completa: botões, toggles, sliders, labels, dropdowns, textboxes, binds, color pickers.
-- 🔔 Sistema de notificações com ícones e tempo de exibição.
-- 💾 Salvamento automático de configurações (`flags`).
-- 🎨 Suporte a temas.
-- 🧩 Integração com Feather Icons.
-- 🖱️ Interface arrastável.
-- 🔗 Suporte a executores modernos como Delta.
 
 ---
 
-## 🛠️ Como Usar
+✨ Melhorias Adicionadas
 
-```lua
+✅ Suporte completo ao toque (touchscreen).
+
+📱 Layout otimizado para telas menores.
+
+⬇️ Dropdown Toggle: seleção múltipla (não presente na versão original).
+
+🔧 Correções visuais em ScrollView, melhor navegação e responsividade.
+
+🧪 Testado em dispositivos com FPS limitado.
+
+
+
+---
+
+🧰 Recursos Originais Mantidos
+
+🎛️ Componentes: Botões, Toggles, Sliders, Labels, Dropdowns, TextBoxes, Binds, Color Pickers.
+
+🔔 Sistema de notificações com ícones e tempo configurável.
+
+💾 Salvamento automático de configurações (Flags).
+
+🎨 Suporte a temas personalizados.
+
+🧩 Ícones Feather totalmente integrados.
+
+🖱️ Interface arrastável.
+
+🧬 Suporte a executores modernos (gethui/syn.protect_gui).
+
+
+
+---
+
+📦 Como Usar
+
 local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/refs/heads/main/UI%20Library.lua"))()
 
 OrionLib:Init()
@@ -54,9 +72,22 @@ local Window = OrionLib:MakeWindow({
 
 ---
 
-📦 Exemplos de Uso
+🧩 Exemplos de Componentes
 
-🧩 Dropdown Toggle (Novo)
+✅ Toggle com Salvamento
+
+Tab:AddToggle({
+    Name = "Velocidade",
+    Default = false,
+    Flag = "SpeedFlag",
+    Save = true,
+    Callback = function(state)
+        local humanoid = game.Players.LocalPlayer.Character.Humanoid
+        humanoid.WalkSpeed = state and 40 or 16
+    end
+})
+
+⬇️ Dropdown Toggle (Novo)
 
 Tab:AddDropdownToggle({
     Name = "Efeitos Visuais",
@@ -71,19 +102,6 @@ Tab:AddDropdownToggle({
     Save = true
 })
 
-✅ Toggle com Salvamento
-
-local SpeedToggle = Tab:AddToggle({
-    Name = "Velocidade",
-    Default = false,
-    Flag = "SpeedFlag",
-    Save = true,
-    Callback = function(state)
-        local humanoid = game.Players.LocalPlayer.Character.Humanoid
-        humanoid.WalkSpeed = state and 40 or 16
-    end
-})
-
 
 ---
 
@@ -94,15 +112,15 @@ OrionLib:Destroy()
 
 ---
 
-⚠️ Observações Técnicas
+⚙️ Detalhes Técnicos
 
-A GUI é protegida automaticamente (syn.protect_gui, gethui()).
+GUI protegida automaticamente (gethui(), syn.protect_gui()).
 
-Configurações são salvas por jogo (GameId) como .txt.
+Configurações salvas como .txt por GameId.
 
-Feather Icons são carregados via https://raw.githubusercontent.com.
+Feather Icons carregados diretamente do GitHub.
 
-Suporte completo a entrada via UserInputService (mouse e toque).
+Total compatibilidade com UserInputService (mouse, teclado, toque).
 
 
 
@@ -110,9 +128,9 @@ Suporte completo a entrada via UserInputService (mouse e toque).
 
 🤝 Créditos
 
-🧠 Autor original da Orion Library – [Inserir link se disponível]
+🧠 Autor original da Orion Library – Desconhecido (insira link se souber)
 
-🛠️ Adaptação para mobile & melhorias: DH SOARES
+🛠️ Adaptação para mobile, Dropdown Toggle e melhorias gerais: DH SOARES
 
 
 
@@ -120,6 +138,8 @@ Suporte completo a entrada via UserInputService (mouse e toque).
 
 📄 Licença
 
-Distribuído livremente para fins educacionais e pessoais. Dê os devidos créditos ao autor original e às modificações.
+Uso livre para fins educacionais e pessoais.
+Dê os devidos créditos ao autor original e às modificações quando reutilizar ou redistribuir.
+
 
 ---
