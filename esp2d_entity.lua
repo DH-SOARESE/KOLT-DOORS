@@ -1,82 +1,93 @@
---[[ 
-    Autor: DH SOARES (editado)
-    ESP com formas 3D reais (Esfera, Cubo, Cápsula, Square)
-    Tracer do topo da tela até o modelo
-    Contorno com cor mais forte
+--[[
+Autor: DH SOARES
+ESP orientada a objetos 3D (Highlight e Adornments)
+Suporte: Tracer 2D do topo da tela, Nome, Distância, Formas 3D (Esfera, Cubo, Cápsula)
 --]]
 
 local ESP3D = {}
 ESP3D.Enabled = true
 ESP3D.Objects = {}
+ESP3D.RunConnection = nil
 
-local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local function CreateAdornment(form, adornee, color, size)
-	local adorn
-	if form == "Esfera" then
-		adorn = Instance.new("SphereHandleAdornment")
-	elseif form == "Cubo" or form == "Square" then
-		adorn = Instance.new("BoxHandleAdornment")
-	elseif form == "Cápsula" or form == "Capsula" then
-		adorn = Instance.new("CylinderHandleAdornment")
-	else
-		adorn = Instance.new("BoxHandleAdornment")
-	end
-
-	adorn.Adornee = adornee
-	adorn.AlwaysOnTop = true
-	adorn.ZIndex = 5
-	adorn.Color3 = color
-	adorn.Transparency = 0.3
-	adorn.Size = size
-	adorn.Name = "ESP3D_Visual"
-	adorn.Parent = CoreGui
-	adorn.Visible = true
-
-	-- Contorno (mais forte)
-	local outline = adorn:Clone()
-	outline.ZIndex = 4
-	outline.Transparency = 0
-	outline.Color3 = color:lerp(Color3.new(1, 1, 1), -0.5)
-	outline.Size = size * 1.05
-	outline.Parent = CoreGui
-
-	return adorn, outline
-end
-
 function ESP3D:Create(config)
 	if not config or not config.Object then return end
-	local object = config.Object
-	local objId = tostring(object:GetDebugId())
+	local objId = tostring(config.Object:GetDebugId())
 	if ESP3D.Objects[objId] then return end
 
-	local color = config.Color or Color3.fromRGB(255, 255, 255)
-	local form = config.Form or "Cubo"
+	local obj = config.Object
+	local part = obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart") or obj
+	if not part then return end
 
-	local adornee
-	if object:IsA("Model") then
-		object.PrimaryPart = object.PrimaryPart or object:FindFirstChildWhichIsA("BasePart")
-		if not object.PrimaryPart then return end
-		adornee = object.PrimaryPart
-	elseif object:IsA("BasePart") then
-		adornee = object
+	local highlight = Instance.new("Highlight")
+	highlight.FillColor = config.Color or Color3.fromRGB(255, 255, 255)
+	highlight.OutlineColor = (config.Color and config.Color:lerp(Color3.new(1, 1, 1), -0.5)) or Color3.new(1, 1, 1)
+	highlight.FillTransparency = 0.5
+	highlight.OutlineTransparency = 0
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Enabled = true
+	highlight.Adornee = obj
+	highlight.Parent = game.CoreGui
+
+	local adornment
+	local form = config.Form3D or "Sphere"
+	if form == "Sphere" then
+		adornment = Instance.new("SphereHandleAdornment")
+	elseif form == "Box" then
+		adornment = Instance.new("BoxHandleAdornment")
+	elseif form == "Capsule" then
+		adornment = Instance.new("CylinderHandleAdornment")
 	else
-		return
+		form = "Sphere"
+		adornment = Instance.new("SphereHandleAdornment")
 	end
 
-	local _, size = object:IsA("Model") and object:GetBoundingBox() or {nil, adornee.Size}
-	local adorn, outline = CreateAdornment(form, adornee, color, size)
+	adornment.Radius = 2
+	adornment.Size = Vector3.new(4, 4, 4)
+	adornment.Adornee = part
+	adornment.AlwaysOnTop = true
+	adornment.ZIndex = 1
+	adornment.Color3 = config.Color or Color3.fromRGB(255, 255, 255)
+	adornment.Transparency = 0.4
+	adornment.Name = "ESPAdornment"
+	adornment.Parent = game.CoreGui
+
+	local tracer = Drawing.new("Line")
+	tracer.Thickness = 2
+	tracer.Color = adornment.Color3
+	tracer.Visible = false
+
+	local name = Drawing.new("Text")
+	name.Size = 13
+	name.Center = true
+	name.Outline = true
+	name.Visible = false
+	name.Color = adornment.Color3
+
+	local distance = Drawing.new("Text")
+	distance.Size = 13
+	distance.Center = true
+	distance.Outline = true
+	distance.Visible = false
+	distance.Color = adornment.Color3
 
 	ESP3D.Objects[objId] = {
-		Object = object,
-		Adornment = adorn,
-		Outline = outline,
+		Object = obj,
+		Part = part,
+		Name = config.CustomName or obj.Name,
 		ShowTracer = config.Tracer ~= false,
-		Color = color
+		ShowName = config.Name ~= false,
+		ShowDistance = config.Distance ~= false,
+		Draws = {
+			highlight = highlight,
+			adornment = adornment,
+			tracer = tracer,
+			name = name,
+			distance = distance,
+		}
 	}
 end
 
@@ -84,20 +95,15 @@ function ESP3D:Remove(object)
 	local objId = tostring(object:GetDebugId())
 	local data = ESP3D.Objects[objId]
 	if data then
-		if data.Adornment then data.Adornment:Destroy() end
-		if data.Outline then data.Outline:Destroy() end
-		if data.TracerLine then data.TracerLine:Remove() end
+		for _, d in pairs(data.Draws) do
+			if typeof(d) == "Instance" then
+				pcall(function() d:Destroy() end)
+			else
+				d:Remove()
+			end
+		end
 		ESP3D.Objects[objId] = nil
 	end
-end
-
-function ESP3D:Clear()
-	for _, data in pairs(ESP3D.Objects) do
-		if data.Adornment then data.Adornment:Destroy() end
-		if data.Outline then data.Outline:Destroy() end
-		if data.TracerLine then data.TracerLine:Remove() end
-	end
-	ESP3D.Objects = {}
 end
 
 function ESP3D:Enable()
@@ -107,49 +113,64 @@ end
 function ESP3D:Disable()
 	ESP3D.Enabled = false
 	for _, data in pairs(ESP3D.Objects) do
-		if data.Adornment then data.Adornment.Visible = false end
-		if data.Outline then data.Outline.Visible = false end
-		if data.TracerLine then data.TracerLine.Visible = false end
+		for _, d in pairs(data.Draws) do
+			if typeof(d) ~= "Instance" then
+				d.Visible = false
+			elseif d:IsA("Highlight") then
+				d.Enabled = false
+			end
+		end
 	end
 end
 
--- Atualização visual
-RunService.RenderStepped:Connect(function()
+function ESP3D:Clear()
+	for _, data in pairs(ESP3D.Objects) do
+		for _, d in pairs(data.Draws) do
+			if typeof(d) == "Instance" then
+				pcall(function() d:Destroy() end)
+			else
+				d:Remove()
+			end
+		end
+	end
+	ESP3D.Objects = {}
+end
+
+ESP3D.RunConnection = game:GetService("RunService").RenderStepped:Connect(function()
 	if not ESP3D.Enabled then return end
 
 	for id, data in pairs(ESP3D.Objects) do
 		local obj = data.Object
-		if not obj or not obj:IsDescendantOf(workspace) then
+		local part = data.Part
+		if not obj or not part or not obj:IsDescendantOf(workspace) then
 			ESP3D:Remove(obj)
 		else
-			if data.Adornment then data.Adornment.Visible = true end
-			if data.Outline then data.Outline.Visible = true end
+			local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+			local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude) or 0
+			local draws = data.Draws
 
-			if data.ShowTracer then
-				local root = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")) or obj
-				if root then
-					local worldPos = root.Position
-					local screenPos, onScreen = Camera:WorldToViewportPoint(worldPos)
+			if data.ShowTracer and onScreen then
+				draws.tracer.From = Vector2.new(Camera.ViewportSize.X / 2, 0)
+				draws.tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+				draws.tracer.Visible = true
+			else
+				draws.tracer.Visible = false
+			end
 
-					if not data.TracerLine then
-						local line = Drawing.new("Line")
-						line.Thickness = 2
-						line.Color = data.Color
-						line.Transparency = 1
-						data.TracerLine = line
-					end
+			if data.ShowName and onScreen then
+				draws.name.Position = Vector2.new(screenPos.X, screenPos.Y - 20)
+				draws.name.Text = data.Name
+				draws.name.Visible = true
+			else
+				draws.name.Visible = false
+			end
 
-					local tracer = data.TracerLine
-					if onScreen then
-						tracer.From = Vector2.new(screenPos.X, 0) -- topo da tela
-						tracer.To = Vector2.new(screenPos.X, screenPos.Y)
-						tracer.Visible = true
-					else
-						tracer.Visible = false
-					end
-				end
-			elseif data.TracerLine then
-				data.TracerLine.Visible = false
+			if data.ShowDistance and onScreen then
+				draws.distance.Position = Vector2.new(screenPos.X, screenPos.Y + 12)
+				draws.distance.Text = "[" .. math.floor(dist) .. "m]"
+				draws.distance.Visible = true
+			else
+				draws.distance.Visible = false
 			end
 		end
 	end
