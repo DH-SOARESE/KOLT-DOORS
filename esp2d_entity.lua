@@ -1,179 +1,158 @@
 --[[ 
-Autor: DH SOARES
-ESP 2D com formas que simulam aparência 3D
-Suporte: Nome, Distância, Tracer, Formas (Esfera, Cubo, Cápsula)
-Orientado a Model ou BasePart
-]]
+    Autor: DH SOARES (editado)
+    ESP com formas 3D reais (Esfera, Cubo, Cápsula, Square)
+    Tracer do topo da tela até o modelo
+    Contorno com cor mais forte
+--]]
 
-local ESP2D = {}
-ESP2D.Drawings = {}
-ESP2D.Enabled = true
+local ESP3D = {}
+ESP3D.Enabled = true
+ESP3D.Objects = {}
 
-local camera = workspace.CurrentCamera
-local rs = game:GetService("RunService")
-local uis = game:GetService("UserInputService")
-local players = game:GetService("Players")
-local localPlayer = players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
-local function createDrawing(cls, props)
-	local obj = Drawing.new(cls)
-	for i, v in pairs(props) do
-		obj[i] = v
+local function CreateAdornment(form, adornee, color, size)
+	local adorn
+	if form == "Esfera" then
+		adorn = Instance.new("SphereHandleAdornment")
+	elseif form == "Cubo" or form == "Square" then
+		adorn = Instance.new("BoxHandleAdornment")
+	elseif form == "Cápsula" or form == "Capsula" then
+		adorn = Instance.new("CylinderHandleAdornment")
+	else
+		adorn = Instance.new("BoxHandleAdornment")
 	end
-	return obj
+
+	adorn.Adornee = adornee
+	adorn.AlwaysOnTop = true
+	adorn.ZIndex = 5
+	adorn.Color3 = color
+	adorn.Transparency = 0.3
+	adorn.Size = size
+	adorn.Name = "ESP3D_Visual"
+	adorn.Parent = CoreGui
+	adorn.Visible = true
+
+	-- Contorno (mais forte)
+	local outline = adorn:Clone()
+	outline.ZIndex = 4
+	outline.Transparency = 0
+	outline.Color3 = color:lerp(Color3.new(1, 1, 1), -0.5)
+	outline.Size = size * 1.05
+	outline.Parent = CoreGui
+
+	return adorn, outline
 end
 
-local function getPosition(obj)
-	if obj:IsA("Model") then
-		local cf, size = obj:GetBoundingBox()
-		return cf.Position
-	elseif obj:IsA("BasePart") then
-		return obj.Position
+function ESP3D:Create(config)
+	if not config or not config.Object then return end
+	local object = config.Object
+	local objId = tostring(object:GetDebugId())
+	if ESP3D.Objects[objId] then return end
+
+	local color = config.Color or Color3.fromRGB(255, 255, 255)
+	local form = config.Form or "Cubo"
+
+	local adornee
+	if object:IsA("Model") then
+		object.PrimaryPart = object.PrimaryPart or object:FindFirstChildWhichIsA("BasePart")
+		if not object.PrimaryPart then return end
+		adornee = object.PrimaryPart
+	elseif object:IsA("BasePart") then
+		adornee = object
+	else
+		return
+	end
+
+	local _, size = object:IsA("Model") and object:GetBoundingBox() or {nil, adornee.Size}
+	local adorn, outline = CreateAdornment(form, adornee, color, size)
+
+	ESP3D.Objects[objId] = {
+		Object = object,
+		Adornment = adorn,
+		Outline = outline,
+		ShowTracer = config.Tracer ~= false,
+		Color = color
+	}
+end
+
+function ESP3D:Remove(object)
+	local objId = tostring(object:GetDebugId())
+	local data = ESP3D.Objects[objId]
+	if data then
+		if data.Adornment then data.Adornment:Destroy() end
+		if data.Outline then data.Outline:Destroy() end
+		if data.TracerLine then data.TracerLine:Remove() end
+		ESP3D.Objects[objId] = nil
 	end
 end
 
-local function createESP(obj, cfg)
-	local box = createDrawing("Square", {
-		Thickness = 2,
-		Filled = true,
-		Color = cfg.Color or Color3.new(1, 0, 0),
-		Transparency = 0.6,
-		Visible = false,
-		ZIndex = 2
-	})
-
-	local outline = createDrawing("Square", {
-		Thickness = 4,
-		Filled = false,
-		Color = Color3.new(0, 0, 0),
-		Transparency = 1,
-		Visible = false,
-		ZIndex = 1
-	})
-
-	local tracer = createDrawing("Line", {
-		Color = cfg.Color or Color3.new(1, 1, 1),
-		Transparency = 0.6,
-		Thickness = 2,
-		Visible = false,
-		ZIndex = 2
-	})
-
-	local name = createDrawing("Text", {
-		Color = Color3.new(1, 1, 1),
-		Size = 14,
-		Center = true,
-		Outline = true,
-		Visible = false,
-		ZIndex = 3
-	})
-
-	local distance = createDrawing("Text", {
-		Color = Color3.new(1, 1, 1),
-		Size = 13,
-		Center = true,
-		Outline = true,
-		Visible = false,
-		ZIndex = 3
-	})
-
-	ESP2D.Drawings[obj] = {box = box, outline = outline, tracer = tracer, name = name, distance = distance, cfg = cfg}
+function ESP3D:Clear()
+	for _, data in pairs(ESP3D.Objects) do
+		if data.Adornment then data.Adornment:Destroy() end
+		if data.Outline then data.Outline:Destroy() end
+		if data.TracerLine then data.TracerLine:Remove() end
+	end
+	ESP3D.Objects = {}
 end
 
-function ESP2D:Remove(obj)
-	local esp = ESP2D.Drawings[obj]
-	if esp then
-		for _, v in pairs(esp) do
-			if typeof(v) == "table" and v.Remove then
-				v:Remove()
-			end
-		end
-		ESP2D.Drawings[obj] = nil
+function ESP3D:Enable()
+	ESP3D.Enabled = true
+end
+
+function ESP3D:Disable()
+	ESP3D.Enabled = false
+	for _, data in pairs(ESP3D.Objects) do
+		if data.Adornment then data.Adornment.Visible = false end
+		if data.Outline then data.Outline.Visible = false end
+		if data.TracerLine then data.TracerLine.Visible = false end
 	end
 end
 
-function ESP2D:Create(cfg)
-	assert(cfg.Object and typeof(cfg.Object) == "Instance", "Object inválido")
-	createESP(cfg.Object, cfg)
-end
+-- Atualização visual
+RunService.RenderStepped:Connect(function()
+	if not ESP3D.Enabled then return end
 
-rs.RenderStepped:Connect(function()
-	if not ESP2D.Enabled then return end
-	for obj, esp in pairs(ESP2D.Drawings) do
-		if not obj or not obj.Parent then
-			ESP2D:Remove(obj)
-			continue
-		end
+	for id, data in pairs(ESP3D.Objects) do
+		local obj = data.Object
+		if not obj or not obj:IsDescendantOf(workspace) then
+			ESP3D:Remove(obj)
+		else
+			if data.Adornment then data.Adornment.Visible = true end
+			if data.Outline then data.Outline.Visible = true end
 
-		local pos = getPosition(obj)
-		local screenPos, onScreen = camera:WorldToViewportPoint(pos)
-		if not onScreen then
-			for _, v in pairs(esp) do
-				if typeof(v) == "table" and v.Visible ~= nil then
-					v.Visible = false
+			if data.ShowTracer then
+				local root = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")) or obj
+				if root then
+					local worldPos = root.Position
+					local screenPos, onScreen = Camera:WorldToViewportPoint(worldPos)
+
+					if not data.TracerLine then
+						local line = Drawing.new("Line")
+						line.Thickness = 2
+						line.Color = data.Color
+						line.Transparency = 1
+						data.TracerLine = line
+					end
+
+					local tracer = data.TracerLine
+					if onScreen then
+						tracer.From = Vector2.new(screenPos.X, 0) -- topo da tela
+						tracer.To = Vector2.new(screenPos.X, screenPos.Y)
+						tracer.Visible = true
+					else
+						tracer.Visible = false
+					end
 				end
+			elseif data.TracerLine then
+				data.TracerLine.Visible = false
 			end
-			continue
-		end
-
-		local cfg = esp.cfg
-		local sizeFactor = math.clamp((camera.CFrame.Position - pos).Magnitude / 30, 1.2, 4)
-
-		-- Desenhar formas diferentes
-		local size = Vector2.new(20, 20) * sizeFactor
-		if cfg.Form == "Esfera" then
-			esp.box.Size = size
-			esp.box.Position = screenPos - size / 2
-			esp.box.Radius = math.floor(size.X / 2)
-			esp.box.Filled = true
-			esp.box.Visible = true
-		elseif cfg.Form == "Cubo" then
-			esp.box.Size = size
-			esp.box.Position = screenPos - size / 2
-			esp.box.Visible = true
-		elseif cfg.Form == "Capsula" then
-			esp.box.Size = Vector2.new(size.X * 0.6, size.Y * 1.2)
-			esp.box.Position = screenPos - esp.box.Size / 2
-			esp.box.Visible = true
-		else -- Square padrão
-			esp.box.Size = size
-			esp.box.Position = screenPos - size / 2
-			esp.box.Visible = true
-		end
-
-		-- Outline
-		esp.outline.Size = esp.box.Size
-		esp.outline.Position = esp.box.Position
-		esp.outline.Visible = true
-
-		-- Nome
-		if cfg.Name then
-			esp.name.Text = cfg.CustomName or obj.Name
-			esp.name.Position = screenPos - Vector2.new(0, size.Y / 2 + 16)
-			esp.name.Visible = true
-		else
-			esp.name.Visible = false
-		end
-
-		-- Distância
-		if cfg.Distance then
-			local dist = (camera.CFrame.Position - pos).Magnitude
-			esp.distance.Text = "[" .. math.floor(dist) .. "m]"
-			esp.distance.Position = screenPos + Vector2.new(0, size.Y / 2 + 2)
-			esp.distance.Visible = true
-		else
-			esp.distance.Visible = false
-		end
-
-		-- Tracer
-		if cfg.Tracer then
-			esp.tracer.From = Vector2.new(camera.ViewportSize.X / 2, 0)
-			esp.tracer.To = screenPos
-			esp.tracer.Visible = true
-		else
-			esp.tracer.Visible = false
 		end
 	end
 end)
 
-return ESP2D
+return ESP3D
