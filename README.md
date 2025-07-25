@@ -40,6 +40,7 @@ Esta versão é otimizada para dispositivos móveis, mantendo todos os recursos 
 1. **Carregue a biblioteca:**
    ```lua
    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/refs/heads/main/UI%20Library.lua"))()
+   ```
 
 2. Inicialize a interface:
 
@@ -47,7 +48,7 @@ OrionLib:Init()
 
 
 3. Crie uma janela:
-
+```lua
 local Window = OrionLib:MakeWindow({
     Name = "Meu Script Incrível",
     SaveConfig = true,
@@ -56,7 +57,7 @@ local Window = OrionLib:MakeWindow({
     ShowIcon = true,
     Icon = "rbxassetid://SEU_ICON_ID"
 })
-
+```
 
 
 
@@ -65,7 +66,7 @@ local Window = OrionLib:MakeWindow({
 🧩 Exemplos de Componentes
 
 ✅ Toggle com Salvamento
-
+```lua
 Tab:AddToggle({
     Name = "Velocidade",
     Default = false,
@@ -76,9 +77,9 @@ Tab:AddToggle({
         humanoid.WalkSpeed = state and 40 or 16
     end
 })
-
+```
 ⬇️ Dropdown Toggle (Novo)
-
+```lua
 Tab:AddDropdownToggle({
     Name = "Efeitos Visuais",
     Options = {"Bloom", "Blur", "Vignette"},
@@ -91,13 +92,14 @@ Tab:AddDropdownToggle({
         end
     end
 })
-
+```
 
 ---
 
 🧹 Remover a Interface
-
+```lua
 OrionLib:Destroy()
+```
 
 
 ---
@@ -138,11 +140,11 @@ Recurso	Descrição
 🔧 Como Usar
 
 🔹 Carregar a biblioteca:
-
+```lua
 local ModelESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/DH-SOARESE/KOLT-DOORS/main/Esp%20library.lua"))()
-
+```
 🔸 Adicionar um Model:
-
+```lua
 local obj = workspace:WaitForChild("MeuModel")
 ModelESP:Add(obj, {
     Name = "Inimigo",
@@ -152,9 +154,9 @@ ModelESP:Add(obj, {
     MinDistance = 10,
     MaxDistance = 100,
 })
-
+```
 🔸 Adicionar uma BasePart:
-
+```lua
 local part = workspace:WaitForChild("MinhaParte")
 ModelESP:Add(part, {
     Color = Color3.fromRGB(0, 255, 0),
@@ -163,15 +165,15 @@ ModelESP:Add(part, {
     TracerOrigin = "Bottom",
     HighlightFill = true
 })
-
+```
 🔸 Adicionar Caixa 3D:
-
+```lua
 ModelESP:Add(obj, {
     Show3DBox = true,
     BoxColor = Color3.fromRGB(255, 255, 0),
     BoxSize = Vector3.new(4, 5, 4)
 })
-
+```
 
 ---
 
@@ -204,11 +206,14 @@ BoxSize	Vector3	Tamanho da caixa 3D (opcional).
 ModelESP:Remove(obj)
 
 -- Limpar todos os objetos
+```lua
 ModelESP:Clear()
+```
+```lua
 
 -- Desativar temporariamente
 ModelESP.Enabled = false
-
+```
 
 ---
 
@@ -229,12 +234,6 @@ Ideal para jogos com múltiplos objetos relevantes, como DOORS.
 🤝 Créditos
 
 🧠 Autor Original: DH SOARES
-
-🛠️ Melhorias e Documentação: Gemini (OpenAI)
-
-📚 Readme e Formatação: [ChatGPT]
-
-
 
 ---
 
