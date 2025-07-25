@@ -1,176 +1,171 @@
---[[ 
-Autor: DH SOARES
-ESP orientada a objetos 2D (Sprites, UI)
-Suporte: Tracer, Nome, Distância, Formas (Círculo, Quadrado, Retângulo Vertical)
-Orientado para Model e BasePart
-Remoção individual, Toggle global
---]]
+--[[  
+ESP 2D Library (UI) - by DH SOARES  
+Melhorias:  
+✅ Formas: Circle, Square, VerticalRect  
+✅ Tracer, Nome, Distância  
+✅ Atualização por Heartbeat  
+✅ Remoção individual e global  
+✅ Toggle geral  
+--]]  
 
-local ESP2D = {}
-ESP2D.Enabled = true
-ESP2D.Objects = {}
-ESP2D.RunConnection = nil
-
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 local Camera = workspace.CurrentCamera
-local LocalPlayer = game.Players.LocalPlayer
 
-local function Draw(type)
-	return Drawing.new(type)
-end
+local ESP = {
+	Enabled = true,
+	Instances = {},
+}
 
-local function WorldToViewport(pos)
-	local screenPos, onScreen = Camera:WorldToViewportPoint(pos)
-	return screenPos, onScreen
-end
+local function createESPItem(obj, config)
+	local part = obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") or obj
+	if not part or not part:IsA("BasePart") then return end
 
-function ESP2D:Create(config)
-	if not config or not config.Object then return end
-	local objId = tostring(config.Object:GetDebugId())
-	if ESP2D.Objects[objId] then return end
+	local folder = Instance.new("Folder")
+	folder.Name = "ESP2D_Item"
+	folder.Parent = game:GetService("CoreGui")
 
-	local box = Draw(config.Form == "Circle" and "Circle" or "Square")
-	box.Visible = false
-	box.Color = config.Color or Color3.fromRGB(255, 255, 255)
-	box.Thickness = 2
-	box.Filled = false
-	box.Radius = config.Form == "Circle" and 6 or nil
-	box.Size = config.Form == "VerticalRect" and Vector2.new(4, 20) or Vector2.new(10, 10)
+	local function createGui(form)
+		local gui = Instance.new("BillboardGui")
+		gui.AlwaysOnTop = true
+		gui.Size = UDim2.new(0, 100, 0, 100)
+		gui.Adornee = part
+		gui.Parent = folder
 
-	local tracer = Draw("Line")
-	tracer.Visible = false
-	tracer.Color = box.Color
-	tracer.Thickness = 1
+		local shape = Instance.new("Frame")
+		shape.AnchorPoint = Vector2.new(0.5, 0.5)
+		shape.Position = UDim2.new(0.5, 0, 0.5, 0)
+		shape.BackgroundTransparency = config.Transparency or 0.5
+		shape.BorderSizePixel = 0
+		shape.BackgroundColor3 = config.Color or Color3.new(1, 1, 1)
+		shape.Size = UDim2.new(0, 25, 0, 25)
+		shape.Name = "Shape"
+		shape.ZIndex = 2
+		shape.Parent = gui
 
-	local name = Draw("Text")
-	name.Size = 13
-	name.Center = true
-	name.Outline = true
-	name.Visible = false
-	name.Color = box.Color
-
-	local distance = Draw("Text")
-	distance.Size = 13
-	distance.Center = true
-	distance.Outline = true
-	distance.Visible = false
-	distance.Color = box.Color
-
-	ESP2D.Objects[objId] = {
-		Object = config.Object,
-		Form = config.Form or "Square",
-		ShowTracer = config.Tracer ~= false,
-		ShowName = config.Name ~= false,
-		ShowDistance = config.Distance ~= false,
-		Name = config.CustomName or config.Object.Name,
-		Color = box.Color,
-		Draws = {
-			box = box,
-			tracer = tracer,
-			name = name,
-			distance = distance
-		}
-	}
-end
-
-function ESP2D:Remove(object)
-	local objId = tostring(object:GetDebugId())
-	local data = ESP2D.Objects[objId]
-	if data then
-		for _, v in pairs(data.Draws) do
-			v:Remove()
+		if form == "Circle" then
+			local uicorner = Instance.new("UICorner")
+			uicorner.CornerRadius = UDim.new(1, 0)
+			uicorner.Parent = shape
+		elseif form == "VerticalRect" then
+			shape.Size = UDim2.new(0, 10, 0, 50)
 		end
-		ESP2D.Objects[objId] = nil
+
+		return gui
 	end
-end
 
-function ESP2D:Enable()
-	ESP2D.Enabled = true
-end
+	local gui = createGui(config.Form or "Circle")
 
-function ESP2D:Disable()
-	ESP2D.Enabled = false
-	for _, obj in pairs(ESP2D.Objects) do
-		for _, d in pairs(obj.Draws) do
-			d.Visible = false
-		end
+	if config.Name then
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.Text = config.CustomName or obj.Name
+		nameLabel.Size = UDim2.new(0, 200, 0, 20)
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.TextColor3 = Color3.new(1, 1, 1)
+		nameLabel.TextStrokeTransparency = 0.5
+		nameLabel.TextScaled = true
+		nameLabel.Position = UDim2.new(0.5, -100, 0, -20)
+		nameLabel.AnchorPoint = Vector2.new(0.5, 1)
+		nameLabel.ZIndex = 3
+		nameLabel.Parent = gui
 	end
-end
 
-function ESP2D:Clear()
-	for _, obj in pairs(ESP2D.Objects) do
-		for _, d in pairs(obj.Draws) do
-			d:Remove()
-		end
+	if config.Distance then
+		local distLabel = Instance.new("TextLabel")
+		distLabel.Name = "DistLabel"
+		distLabel.Size = UDim2.new(0, 200, 0, 20)
+		distLabel.BackgroundTransparency = 1
+		distLabel.TextColor3 = Color3.new(0.7, 1, 0.7)
+		distLabel.TextScaled = true
+		distLabel.Position = UDim2.new(0.5, -100, 1, 0)
+		distLabel.AnchorPoint = Vector2.new(0.5, 0)
+		distLabel.ZIndex = 3
+		distLabel.Parent = gui
 	end
-	ESP2D.Objects = {}
-end
 
-ESP2D.RunConnection = game:GetService("RunService").RenderStepped:Connect(function()
-	if not ESP2D.Enabled then return end
-	for id, data in pairs(ESP2D.Objects) do
-		local obj = data.Object
-		if not obj or not obj:IsDescendantOf(workspace) then
-			ESP2D:Remove(obj)
-		else
-			local pos, size
-			if obj:IsA("Model") then
-				local cf, s = obj:GetBoundingBox()
-				pos = cf.Position
-				size = s
-			elseif obj:IsA("BasePart") then
-				pos = obj.Position
-				size = obj.Size
-			else
-				continue
+	if config.Tracer then
+		local line = Drawing.new("Line")
+		line.Thickness = 1.5
+		line.Color = config.Color or Color3.fromRGB(255, 0, 0)
+		line.Transparency = 1
+		line.ZIndex = 1
+
+		gui:GetPropertyChangedSignal("Parent"):Connect(function()
+			if not gui:IsDescendantOf(game) then
+				line:Remove()
 			end
+		end)
 
-			local screenPos, onScreen = WorldToViewport(pos)
-			local draws = data.Draws
-			if onScreen then
-				local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - pos).Magnitude) or 0
+		ESP.Instances[obj] = {Gui = gui, Line = line, Config = config, Obj = obj}
+	else
+		ESP.Instances[obj] = {Gui = gui, Line = nil, Config = config, Obj = obj}
+	end
 
-				-- Escala do box com distância
-				local scale = 1 / (Camera.CFrame.Position - pos).Magnitude * 100
-				local size2D = data.Form == "VerticalRect" and Vector2.new(4, 20) or Vector2.new(size.X * scale, size.Y * scale)
+	obj.AncestryChanged:Connect(function(_, parent)
+		if not parent then
+			ESP.Remove(obj)
+		end
+	end)
+end
 
-				-- Box
-				draws.box.Size = size2D
-				draws.box.Position = Vector2.new(screenPos.X - size2D.X/2, screenPos.Y - size2D.Y/2)
-				draws.box.Visible = true
+function ESP:Add(obj, config)
+	if not obj or ESP.Instances[obj] then return end
+	createESPItem(obj, config)
+end
 
-				-- Tracer
-				if data.ShowTracer then
-					draws.tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-					draws.tracer.To = Vector2.new(screenPos.X, screenPos.Y)
-					draws.tracer.Visible = true
-				else
-					draws.tracer.Visible = false
-				end
+function ESP:Remove(obj)
+	if ESP.Instances[obj] then
+		local info = ESP.Instances[obj]
+		if info.Gui then
+			info.Gui:Destroy()
+		end
+		if info.Line then
+			info.Line:Remove()
+		end
+		ESP.Instances[obj] = nil
+	end
+end
 
-				-- Nome
-				if data.ShowName then
-					draws.name.Position = Vector2.new(screenPos.X, screenPos.Y - size2D.Y/2 - 15)
-					draws.name.Text = data.Name
-					draws.name.Visible = true
-				else
-					draws.name.Visible = false
-				end
+function ESP:Clear()
+	for obj in pairs(ESP.Instances) do
+		self:Remove(obj)
+	end
+end
 
-				-- Distância
-				if data.ShowDistance then
-					draws.distance.Position = Vector2.new(screenPos.X, screenPos.Y + size2D.Y/2 + 2)
-					draws.distance.Text = "[" .. math.floor(dist) .. "m]"
-					draws.distance.Visible = true
-				else
-					draws.distance.Visible = false
-				end
-			else
-				for _, d in pairs(draws) do
-					d.Visible = false
-				end
+function ESP:Toggle(state)
+	ESP.Enabled = state
+end
+
+RunService.RenderStepped:Connect(function()
+	if not ESP.Enabled then return end
+
+	for obj, info in pairs(ESP.Instances) do
+		local part = obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") or obj
+		if not part or not part:IsDescendantOf(workspace) then
+			ESP:Remove(obj)
+			continue
+		end
+
+		if info.Gui and info.Gui:FindFirstChild("DistLabel") then
+			local player = Players.LocalPlayer
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local dist = (char.HumanoidRootPart.Position - part.Position).Magnitude
+				info.Gui.DistLabel.Text = string.format("[%.1f]", dist)
+			end
+		end
+
+		if info.Line then
+			local screenPos1, visible1 = Camera:WorldToViewportPoint(part.Position)
+			local screenPos2, visible2 = Camera:WorldToViewportPoint(Camera.CFrame.Position)
+
+			info.Line.Visible = visible1 and visible2
+			if visible1 and visible2 then
+				info.Line.From = Vector2.new(screenPos2.X, screenPos2.Y)
+				info.Line.To = Vector2.new(screenPos1.X, screenPos1.Y)
 			end
 		end
 	end
 end)
 
-return ESP2D
+return ESP
