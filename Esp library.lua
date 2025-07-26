@@ -1,19 +1,20 @@
 --[[
-📦 Model ESP Library - Versão Completa e Modular
-👤 Autor: DH SOARES (Melhorado por ChatGPT)
+📦 Model ESP Library - Versão Modular
+👤 Autor: DH SOARES
 
+🎯 Função:
+  Sistema de ESP para destacar objetos do tipo Model ou BasePart no jogo.
 
-🎯 Recursos:
-  ✅ Nome + Distância + Tracer
-  ✅ Highlight (contorno + preenchimento)
-  ✅ Caixa 3D (Box ESP via Adornment)
-  ✅ Distância mínima/máxima
-  ✅ Suporte a Model ou BasePart
-  ✅ Configuração individual para cada alvo
+🧩 Recursos Suportados:
+  ✅ Nome personalizado
+  ✅ Distância até o alvo
+  ✅ Tracer (linha do centro da tela até o alvo)
+  ✅ Highlight Fill (preenchimento)
+  ✅ Highlight Outline (contorno)
 
-
-🧠 Observação:
-  - Caixa 3D usa `BoxHandleAdornment` que fica em tempo real e não é Drawing.
+🔍 Observações:
+  - Compatível com objetos diretamente referenciados (Model/BasePart).
+  - Otimizado para uso em jogos como DOORS, com múltiplos objetos simultâneos.
 ]]
 
 local RunService = game:GetService("RunService")
@@ -21,23 +22,28 @@ local camera = workspace.CurrentCamera
 
 local ModelESP = {}
 ModelESP.Objects = {}
+ModelESP.Enabled = true
 
 local tracerOrigins = {
 	Top = function(vs) return Vector2.new(vs.X / 2, 0) end,
 	Center = function(vs) return Vector2.new(vs.X / 2, vs.Y / 2) end,
 	Bottom = function(vs) return Vector2.new(vs.X / 2, vs.Y) end,
+	Left = function(vs) return Vector2.new(0, vs.Y / 2) end,
+	Right = function(vs) return Vector2.new(vs.X, vs.Y / 2) end,
 }
 
 local function getModelCenter(model)
 	local total, count = Vector3.zero, 0
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			total += part.Position
+	for _, p in ipairs(model:GetDescendants()) do
+		if p:IsA("BasePart") and p:IsDescendantOf(workspace) then
+			total += p.Position
 			count += 1
 		end
 	end
 	if count == 0 then return nil end
-	return total / count
+	local center = total / count
+	if center.Magnitude ~= center.Magnitude then return nil end -- NaN check
+	return center
 end
 
 local function createDrawing(class, props)
@@ -46,46 +52,36 @@ local function createDrawing(class, props)
 	return obj
 end
 
-local function createBoxAdornment(part, color)
-	local box = Instance.new("BoxHandleAdornment")
-	box.Name = "ESPBoxAdornment"
-	box.Adornee = part
-	box.Size = part.Size
-	box.AlwaysOnTop = true
-	box.ZIndex = 5
-	box.Color3 = color
-	box.Transparency = 0.5
-	box.Parent = part
-	return box
-end
-
 function ModelESP:Add(target, config)
 	if not target or not target:IsA("Instance") then return end
 
-	local base = target:IsA("Model") and (target.PrimaryPart or target:FindFirstChildWhichIsA("BasePart"))
-		or (target:IsA("BasePart") and target)
-
-	if not base then return end
-
-	-- Apaga antigos highlights/box
-	for _, obj in pairs(target:GetChildren()) do
-		if obj:IsA("Highlight") and obj.Name:match("^ESPHighlight") then obj:Destroy() end
-		if obj:IsA("BoxHandleAdornment") and obj.Name == "ESPBoxAdornment" then obj:Destroy() end
+	local adornee = nil
+	if target:IsA("Model") then
+		adornee = target
+		if not target.PrimaryPart then
+			local primary = target:FindFirstChildWhichIsA("BasePart")
+			if primary then target.PrimaryPart = primary end
+		end
+	elseif target:IsA("BasePart") then
+		adornee = target
+	else
+		return
 	end
 
-	local color = config.Color or Color3.new(1, 1, 1)
+	-- Remove highlights antigos
+	for _, obj in pairs(target:GetChildren()) do
+		if obj:IsA("Highlight") and obj.Name:match("^ESPHighlight") then obj:Destroy() end
+	end
 
 	local cfg = {
 		Target = target,
-		BasePart = base,
-		Color = color,
+		Color = config.Color or Color3.fromRGB(255, 255, 255),
 		Name = config.Name or target.Name,
 		ShowName = config.ShowName or false,
 		ShowDistance = config.ShowDistance or false,
 		Tracer = config.Tracer or false,
 		HighlightFill = config.HighlightFill or false,
 		HighlightOutline = config.HighlightOutline or false,
-		Box3D = config.Box3D or false,
 		TracerOrigin = config.TracerOrigin or "Bottom",
 		MinDistance = config.MinDistance or 0,
 		MaxDistance = config.MaxDistance or math.huge,
@@ -93,14 +89,14 @@ function ModelESP:Add(target, config)
 
 	cfg.tracerLine = cfg.Tracer and createDrawing("Line", {
 		Thickness = 1.5,
-		Color = color,
+		Color = cfg.Color,
 		Transparency = 1,
-		Visible = false,
+		Visible = false
 	}) or nil
 
 	cfg.nameText = cfg.ShowName and createDrawing("Text", {
 		Text = cfg.Name,
-		Color = color,
+		Color = cfg.Color,
 		Size = 16,
 		Center = true,
 		Outline = true,
@@ -110,7 +106,7 @@ function ModelESP:Add(target, config)
 
 	cfg.distanceText = cfg.ShowDistance and createDrawing("Text", {
 		Text = "",
-		Color = color,
+		Color = cfg.Color,
 		Size = 14,
 		Center = true,
 		Outline = true,
@@ -120,12 +116,11 @@ function ModelESP:Add(target, config)
 
 	cfg.highlightFill = cfg.HighlightFill and Instance.new("Highlight") or nil
 	cfg.highlightOutline = cfg.HighlightOutline and Instance.new("Highlight") or nil
-	cfg.boxAdornment = cfg.Box3D and createBoxAdornment(base, color) or nil
 
 	if cfg.highlightFill then
 		cfg.highlightFill.Name = "ESPHighlightFill"
-		cfg.highlightFill.Adornee = target
-		cfg.highlightFill.FillColor = color
+		cfg.highlightFill.Adornee = adornee
+		cfg.highlightFill.FillColor = cfg.Color
 		cfg.highlightFill.FillTransparency = 0.6
 		cfg.highlightFill.OutlineTransparency = 1
 		cfg.highlightFill.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -134,9 +129,9 @@ function ModelESP:Add(target, config)
 
 	if cfg.highlightOutline then
 		cfg.highlightOutline.Name = "ESPHighlightOutline"
-		cfg.highlightOutline.Adornee = target
+		cfg.highlightOutline.Adornee = adornee
 		cfg.highlightOutline.FillTransparency = 1
-		cfg.highlightOutline.OutlineColor = color
+		cfg.highlightOutline.OutlineColor = cfg.Color
 		cfg.highlightOutline.OutlineTransparency = 0
 		cfg.highlightOutline.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		cfg.highlightOutline.Parent = workspace
@@ -154,7 +149,6 @@ function ModelESP:Remove(target)
 			if obj.distanceText then obj.distanceText:Remove() end
 			if obj.highlightFill then obj.highlightFill:Destroy() end
 			if obj.highlightOutline then obj.highlightOutline:Destroy() end
-			if obj.boxAdornment then obj.boxAdornment:Destroy() end
 			table.remove(ModelESP.Objects, i)
 		end
 	end
@@ -167,7 +161,6 @@ function ModelESP:Clear()
 		if obj.distanceText then obj.distanceText:Remove() end
 		if obj.highlightFill then obj.highlightFill:Destroy() end
 		if obj.highlightOutline then obj.highlightOutline:Destroy() end
-		if obj.boxAdornment then obj.boxAdornment:Destroy() end
 	end
 	ModelESP.Objects = {}
 end
@@ -183,63 +176,59 @@ RunService.RenderStepped:Connect(function()
 			continue
 		end
 
-		local pos3D = target:IsA("Model") and getModelCenter(target) or esp.BasePart.Position
+		local pos3D = target:IsA("Model") and getModelCenter(target) or target.Position
 		if not pos3D then continue end
 
 		local success, pos2D = pcall(function()
 			return camera:WorldToViewportPoint(pos3D)
 		end)
 
+		local onScreen = success and pos2D.Z > 0
 		local distance = (camera.CFrame.Position - pos3D).Magnitude
-		local visible = success and pos2D.Z > 0 and distance >= esp.MinDistance and distance <= esp.MaxDistance
+		local visible = onScreen and distance >= esp.MinDistance and distance <= esp.MaxDistance
 
-		if not visible then
+		-- Verificação adicional de posição inválida
+		if not visible or pos2D.X ~= pos2D.X or pos2D.Y ~= pos2D.Y then
 			if esp.tracerLine then esp.tracerLine.Visible = false end
 			if esp.nameText then esp.nameText.Visible = false end
 			if esp.distanceText then esp.distanceText.Visible = false end
 			if esp.highlightFill then esp.highlightFill.Enabled = false end
 			if esp.highlightOutline then esp.highlightOutline.Enabled = false end
-			if esp.boxAdornment then esp.boxAdornment.Visible = false end
 			continue
 		end
 
-		local screenPos = Vector2.new(pos2D.X, pos2D.Y)
-
+		-- Tracer
 		if esp.tracerLine then
 			esp.tracerLine.From = tracerOrigins[esp.TracerOrigin](vs)
-			esp.tracerLine.To = screenPos
-			esp.tracerLine.Color = esp.Color
+			esp.tracerLine.To = Vector2.new(pos2D.X, pos2D.Y)
 			esp.tracerLine.Visible = true
+			esp.tracerLine.Color = esp.Color
 		end
 
+		-- Nome
 		if esp.nameText then
-			esp.nameText.Position = screenPos - Vector2.new(0, 20)
+			esp.nameText.Position = Vector2.new(pos2D.X, pos2D.Y - 20)
+			esp.nameText.Visible = true
 			esp.nameText.Text = esp.Name
 			esp.nameText.Color = esp.Color
-			esp.nameText.Visible = true
 		end
 
+		-- Distância
 		if esp.distanceText then
-			esp.distanceText.Position = screenPos + Vector2.new(0, 10)
+			esp.distanceText.Position = Vector2.new(pos2D.X, pos2D.Y + 6)
+			esp.distanceText.Visible = true
 			esp.distanceText.Text = string.format("%.1fm", distance / 3.57)
 			esp.distanceText.Color = esp.Color
-			esp.distanceText.Visible = true
 		end
 
+		-- Highlights
 		if esp.highlightFill then
-			esp.highlightFill.FillColor = esp.Color
 			esp.highlightFill.Enabled = true
+			esp.highlightFill.FillColor = esp.Color
 		end
-
 		if esp.highlightOutline then
-			esp.highlightOutline.OutlineColor = esp.Color
 			esp.highlightOutline.Enabled = true
-		end
-
-		if esp.boxAdornment then
-			esp.boxAdornment.Visible = true
-			esp.boxAdornment.Color3 = esp.Color
-			esp.boxAdornment.Size = esp.BasePart.Size
+			esp.highlightOutline.OutlineColor = esp.Color
 		end
 	end
 end)
