@@ -1274,7 +1274,10 @@ function OrionLib:MakeWindow(WindowConfig)
 			end
 			
 			function ElementFunction:AddDropdownToggle(DropdownConfig)
-	DropdownConfig = DropdownConfig or {}
+	local TweenService = game:GetService("TweenService")
+	local DropdownConfig = DropdownConfig or {}
+
+	-- Valores padrão
 	DropdownConfig.Name = DropdownConfig.Name or "DropdownToggle"
 	DropdownConfig.Options = DropdownConfig.Options or {}
 	DropdownConfig.Default = DropdownConfig.Default or {}
@@ -1282,6 +1285,7 @@ function OrionLib:MakeWindow(WindowConfig)
 	DropdownConfig.Flag = DropdownConfig.Flag or nil
 	DropdownConfig.Save = DropdownConfig.Save or false
 
+	local MaxElements = 5
 	local Dropdown = {
 		Values = {},
 		Options = DropdownConfig.Options,
@@ -1290,15 +1294,13 @@ function OrionLib:MakeWindow(WindowConfig)
 		Type = "DropdownToggle",
 		Save = DropdownConfig.Save
 	}
-	local MaxElements = 5
 
-	-- Aplicar valores padrões
-	for _, v in pairs(DropdownConfig.Default) do
+	-- Aplicar valores padrão
+	for _, v in ipairs(DropdownConfig.Default) do
 		Dropdown.Values[v] = true
 	end
 
 	local DropdownList = MakeElement("List")
-
 	local DropdownContainer = AddThemeObject(SetProps(SetChildren(MakeElement("ScrollFrame", Color3.fromRGB(40, 40, 40), 4), {
 		DropdownList
 	}), {
@@ -1343,7 +1345,7 @@ function OrionLib:MakeWindow(WindowConfig)
 				Position = UDim2.new(0, 0, 1, -1),
 				Name = "Line",
 				Visible = false
-			}), "Stroke"), 
+			}), "Stroke"),
 			Click
 		}), {
 			Size = UDim2.new(1, 0, 0, 38),
@@ -1358,19 +1360,24 @@ function OrionLib:MakeWindow(WindowConfig)
 		DropdownContainer.CanvasSize = UDim2.new(0, 0, 0, DropdownList.AbsoluteContentSize.Y)
 	end)
 
+	-- Atualiza a quantidade de selecionados
 	local function UpdateSelectedText()
 		local count = 0
 		for _, v in pairs(Dropdown.Values) do
 			if v then count += 1 end
 		end
 		DropdownFrame.F.Selected.Text = count .. " selected"
+		Dropdown.SelectedCount = count
 	end
 
-	local function AddOptions(Options)
-		for _, Option in pairs(Options) do
+	-- Adiciona as opções ao container
+	local function AddOptions(options)
+		for _, option in ipairs(options) do
+			local isSelected = Dropdown.Values[option] or false
+
 			local OptionBtn = AddThemeObject(SetProps(SetChildren(MakeElement("Button", Color3.fromRGB(40, 40, 40)), {
 				MakeElement("Corner", 0, 6),
-				AddThemeObject(SetProps(MakeElement("Label", Option, 13, 0.4), {
+				AddThemeObject(SetProps(MakeElement("Label", option, 13, isSelected and 0 or 0.4), {
 					Position = UDim2.new(0, 8, 0, 0),
 					Size = UDim2.new(1, -8, 1, 0),
 					Name = "Title"
@@ -1378,55 +1385,77 @@ function OrionLib:MakeWindow(WindowConfig)
 			}), {
 				Parent = DropdownContainer,
 				Size = UDim2.new(1, 0, 0, 28),
-				BackgroundTransparency = Dropdown.Values[Option] and 0 or 1,
+				BackgroundTransparency = isSelected and 0 or 1,
 				ClipsDescendants = true
 			}), "Divider")
 
-			Dropdown.Buttons[Option] = OptionBtn
+			Dropdown.Buttons[option] = OptionBtn
 
 			AddConnection(OptionBtn.InputEnded, function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-					Dropdown.Values[Option] = not Dropdown.Values[Option]
+					Dropdown.Values[option] = not Dropdown.Values[option]
 
-					local selected = Dropdown.Values[Option]
-					TweenService:Create(OptionBtn,TweenInfo.new(.15),{BackgroundTransparency = selected and 0 or 1}):Play()
-					TweenService:Create(OptionBtn.Title,TweenInfo.new(.15),{TextTransparency = selected and 0 or 0.4}):Play()
-					
+					local selected = Dropdown.Values[option]
+					TweenService:Create(OptionBtn, TweenInfo.new(.15), {
+						BackgroundTransparency = selected and 0 or 1
+					}):Play()
+					TweenService:Create(OptionBtn.Title, TweenInfo.new(.15), {
+						TextTransparency = selected and 0 or 0.4
+					}):Play()
+
 					UpdateSelectedText()
-					DropdownConfig.Callback(Dropdown.Values)
-					SaveCfg(game.GameId)
+					DropdownConfig.Callback(table.clone(Dropdown.Values))
+
+					if typeof(SaveCfg) == "function" then
+						SaveCfg(game.GameId)
+					end
 				end
 			end)
 		end
 	end
 
-	function Dropdown:Refresh(Options, Delete)
-		if Delete then
-			for _,v in pairs(Dropdown.Buttons) do
+	-- Atualizar opções
+	function Dropdown:Refresh(options, clearOld)
+		if clearOld then
+			for _, v in pairs(Dropdown.Buttons) do
 				v:Destroy()
-			end    
-			table.clear(Dropdown.Options)
+			end
 			table.clear(Dropdown.Buttons)
 			table.clear(Dropdown.Values)
+
+			for _, v in ipairs(DropdownConfig.Default or {}) do
+				Dropdown.Values[v] = true
+			end
 		end
-		Dropdown.Options = Options
-		AddOptions(Dropdown.Options)
+
+		Dropdown.Options = options
+		AddOptions(options)
+		UpdateSelectedText()
 	end
 
+	-- Expandir/retrair lista
 	AddConnection(Click.InputEnded, function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			Dropdown.Toggled = not Dropdown.Toggled
 			DropdownFrame.F.Line.Visible = Dropdown.Toggled
-			TweenService:Create(DropdownFrame.F.Ico,TweenInfo.new(.15),{Rotation = Dropdown.Toggled and 180 or 0}):Play()
+
+			TweenService:Create(DropdownFrame.F.Ico, TweenInfo.new(.15), {
+				Rotation = Dropdown.Toggled and 180 or 0
+			}):Play()
+
 			local newSize = #Dropdown.Options > MaxElements and (38 + MaxElements * 28) or (38 + DropdownList.AbsoluteContentSize.Y)
-			TweenService:Create(DropdownFrame,TweenInfo.new(.15),{Size = Dropdown.Toggled and UDim2.new(1, 0, 0, newSize) or UDim2.new(1, 0, 0, 38)}):Play()
+			local targetSize = Dropdown.Toggled and UDim2.new(1, 0, 0, newSize) or UDim2.new(1, 0, 0, 38)
+
+			TweenService:Create(DropdownFrame, TweenInfo.new(.15), {
+				Size = targetSize
+			}):Play()
 		end
 	end)
 
+	-- Inicialização
 	Dropdown:Refresh(Dropdown.Options, false)
-	UpdateSelectedText()
 
-	if DropdownConfig.Flag then				
+	if DropdownConfig.Flag and typeof(OrionLib) == "table" then
 		OrionLib.Flags[DropdownConfig.Flag] = Dropdown
 	end
 
